@@ -1,5 +1,69 @@
 <resources>
     <string name="app_name">APIGW Mobile</string>
     <string name="app_title">APIGW Manager</string>
+
     <string name="app_subtitle">For Android</string>
+    <string name="conn_mgr">Connection Manager</string>
+    <string name="cert_not_trusted">Certificate Not Trusted</string>
+    <string name="add_to_truststore">Add to trusted certificate store?</string>
+    <string name="empty_string"></string>
+    <string name="username">Username</string>
+    <string name="password">Password</string>
+
+    <string name="action_add">Add</string>
+    <string name="action_edit">Edit</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_enable">Enable</string>
+    <string name="action_disable">Disable</string>
+    <string name="action_save">Save</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_settings">Settings</string>
+    <string name="action_check_cert">Check Trust Status</string>
+    <string name="action_view_cert">View Certificate</string>
+    <string name="action_remove_trust">Remove Truststore</string>
+    <string name="action_start_gateway">Start Gateway</string>
+    <string name="action_stop_gateway">Stop Gateway</string>
+    <string name="action_gateway_messaging">Messaging</string>
+    <string name="action_gateway_kps">Browse Kps</string>
+    <string name="action_deployment_details">Deployment Details</string>
+    <string name="action_save_deploy_archive">Save Deployment Archive</string>
+
+    <string name="welcome">Welcome!</string>
+
+    <string name="welcome_msg">Welcome to API Gateway Manager for Android!\n\nTo get started, please add a connection to a running Admin Node Manager.</string>
+
+    <string name="add_inst">Add API Gateway Instance</string>
+
+    <string name="confirm">Confirm</string>
+    <string name="alert">Error</string>
+    <string name="info">FYI</string>
+    <string name="warning">Warning</string>
+    <string name="touch_to">Touch OK to %1$s \'%2$s\'</string>
+
+
+    <string name="enabled">Enabled</string>
+    <string name="port">Port</string>
+    <string name="host">Host</string>
+    <string name="hosts">Hosts</string>
+    <string name="group">Group</string>
+    <string name="groups">Groups</string>
+    <string name="service">Service</string>
+    <string name="services">Services</string>
+    <string name="topo_details">Topology Details</string>
+    <string name="nodemgr">Node Manager</string>
+    <string name="admin_nodemgr">Admin Node Manager</string>
+    <string name="nodemgrs">Node Managers</string>
+    <string name="gateways">API Server Instances</string>
+    <string name="topology">Topology</string>
+    <string name="full_topology">Full Topology</string>
+    <string name="name">Name</string>
+    <string name="mgmt_port">Management Port</string>
+    <string name="svcs_port">Services Port</string>
+    <string name="use_ssl">Use SSL?</string>
+
+    <string name="cert_trusted">Certificate Chain Trusted</string>
+    <string name="truststore_removed">Trust Store removed</string>
+    <string name="confirm_remove_truststore">Touch OK to remove trusted certificate store</string>
+    <string name="truststore_notfound">Trust Store not found</string>
+
 </resources>

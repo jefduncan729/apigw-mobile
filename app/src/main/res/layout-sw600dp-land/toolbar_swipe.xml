@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:baselineAligned="false"
+    >
+
+    <FrameLayout
+        android:layout_weight="0.25"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:background="@color/colorDisabled"
+        >
+        <View
+            android:layout_width="@dimen/spacer_small"
+            android:layout_height="match_parent"
+            android:background="@drawable/drawer_shadow_flip"
+            android:layout_gravity="end"
+            />
+    </FrameLayout>
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <include layout="@layout/toolbar"/>
+
+        <android.support.v4.widget.SwipeRefreshLayout xmlns:android="http://schemas.android.com/apk/res/android"
+            android:id="@id/swipe_refresh"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <include layout="@layout/scrollable"/>
+
+        </android.support.v4.widget.SwipeRefreshLayout>
+    </LinearLayout>
+    <FrameLayout
+        android:layout_weight="0.25"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:background="@color/colorDisabled">
+        <View
+            android:layout_width="@dimen/spacer_medium"
+            android:layout_height="match_parent"
+            android:background="@drawable/drawer_shadow"
+            android:layout_gravity="start"
+            />
+    </FrameLayout>
+
+</LinearLayout>

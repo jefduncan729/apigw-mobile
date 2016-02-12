@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item type="id" name="container01"/>
+    <item type="id" name="container02"/>
+    <item type="id" name="container03"/>
+    <item type="id" name="swipe_refresh"/>
+    <item type="id" name="toolbar"/>
+
+    <item type="id" name="action_add"/>
+    <item type="id" name="action_edit"/>
+    <item type="id" name="action_delete"/>
+    <item type="id" name="action_enable"/>
+    <item type="id" name="action_disable"/>
+    <item type="id" name="action_save"/>
+    <item type="id" name="action_cancel"/>
+    <item type="id" name="action_settings"/>
+    <item type="id" name="action_check_cert"/>
+    <item type="id" name="action_view_cert"/>
+    <item type="id" name="action_remove_trust"/>
+    <item type="id" name="action_start_gateway"/>
+    <item type="id" name="action_stop_gateway"/>
+    <item type="id" name="action_gateway_messaging"/>
+    <item type="id" name="action_gateway_kps"/>
+    <item type="id" name="action_deployment_details"/>
+    <item type="id" name="action_save_deploy_archive"/>
+    <item type="id" name="action_conn_mgr"/>
+    <item type="id" name="action_connect"/>
+
+    <item type="id" name="edit_name"/>
+
+    <item type="id" name="edit_host"/>
+    <item type="id" name="edit_group"/>
+    <item type="id" name="edit_use_ssl"/>
+    <item type="id" name="edit_system_ca"/>
+    <item type="id" name="edit_user_ca"/>
+    <item type="id" name="edit_external_ca"/>
+    <item type="id" name="edit_svcs_port"/>
+    <item type="id" name="edit_mgmt_port"/>
+    <item type="id" name="edit_port"/>
+    <item type="id" name="edit_user"/>
+    <item type="id" name="edit_passwd"/>
+    <item type="id" name="edit_enabled"/>
+    <item type="id" name="edit_remember_user"/>
+
+    <item type="id" name="label_name"/>
+    <item type="id" name="label_host"/>
+    <item type="id" name="label_group"/>
+    <item type="id" name="label_tags"/>
+    <item type="id" name="label_mgmt_port"/>
+    <item type="id" name="label_svcs_port"/>
+    <item type="id" name="label_port"/>
+    <item type="id" name="label_user"/>
+    <item type="id" name="label_passwd"/>
+    <item type="id" name="label_key"/>
+    <item type="id" name="label_value"/>
+
+</resources>

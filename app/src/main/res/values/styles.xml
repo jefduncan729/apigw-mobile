@@ -1,4 +1,11 @@
 <resources>
+    <attr name="ic_discard" format="reference"/>
+    <attr name="ic_new" format="reference"/>
+    <attr name="ic_back" format="reference"/>
+    <attr name="ic_drawer" format="reference"/>
+    <attr name="ic_settings" format="reference"/>
+    <attr name="ic_save" format="reference"/>
+    <attr name="ic_cancel" format="reference"/>
 
     <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
@@ -6,6 +13,76 @@
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
+
+        <item name="ic_discard">@mipmap/ic_action_discard_holo_light</item>
+        <item name="ic_new">@mipmap/ic_action_new_holo_light</item>
+        <item name="ic_back">@mipmap/ic_action_back_holo_light</item>
+        <item name="ic_drawer">@mipmap/ic_ab_drawer_holo_light</item>
+        <item name="ic_settings">@mipmap/ic_action_settings_holo_light</item>
+        <item name="ic_save">@mipmap/ic_action_done_holo_light</item>
+        <item name="ic_cancel">@mipmap/ic_action_cancel_holo_light</item>
+    </style>
+
+    <style name="SmallText"
+        parent="android:TextAppearance.Holo.Small">
+    </style>
+
+    <style name="SmallTextBold"
+        parent="android:TextAppearance.Holo.Small">
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="MediumText"
+        parent="android:TextAppearance.Holo.Medium">
+    </style>
+
+    <style name="MediumTextBold"
+        parent="android:TextAppearance.Holo.Medium">
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="LargeText"
+        parent="android:TextAppearance.Holo.Large">
+    </style>
+
+    <style name="LargeTextBold"
+        parent="android:TextAppearance.Holo.Large">
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="HeaderTextStyle"
+        parent="android:Widget.Holo.ActionBar.TabText">
+        <item name="android:textSize">18sp</item>
+        <item name="android:textStyle">bold|italic</item>
+    </style>
+
+    <!-- list header text -->
+    <style name="ListHeaderTextStyle"
+        parent="android:Widget.Holo.ActionBar.TabText">
+        <!--
+                <item name="android:textColor">@color/frag_title_text</item>
+                <item name="android:background">@color/disabled</item>
+        -->
+        <item name="android:textSize">18sp</item>
+        <item name="android:textStyle">bold|italic</item>
+    </style>
+
+    <!-- title text -->
+    <style name="FragmentTitleTextStyle"
+        parent="android:Widget.Holo.ActionBar.TabText">
+        <!--<item name="android:textColor">@color/frag_title_text</item>-->
+        <item name="android:textSize">18sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+    <style name="ProgressBar" parent="android:Widget.Holo.Light.ProgressBar.Horizontal"/>
+
+    <style name="Widget"/>
+    <style name="Widget.SampleDashboard.Card" parent="Widget">
+        <item name="android:gravity">center</item>
+        <item name="android:layout_margin">@dimen/card_margin</item>
+        <item name="cardCornerRadius">4dp</item>
+        <item name="cardElevation">5dp</item>
+        <item name="contentPadding">@dimen/card_padding</item>
     </style>
 
 </resources>
