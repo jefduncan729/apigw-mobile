@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+<!--
+
+    <style name="AppTheme" parent="android:Theme.Material.Light">
+        <item name="android:actionBarStyle">@style/ActionBar</item>
+        <item name="ic_discard">@mipmap/ic_action_discard_holo_light</item>
+        <item name="ic_new">@mipmap/ic_action_new_holo_light</item>
+        <item name="ic_back">@mipmap/ic_action_back_holo_light</item>
+        <item name="ic_drawer">@mipmap/ic_ab_drawer_holo_light</item>
+        <item name="ic_settings">@mipmap/ic_action_settings_holo_light</item>
+        <item name="ic_save">@mipmap/ic_action_done_holo_light</item>
+        <item name="ic_cancel">@mipmap/ic_action_cancel_holo_light</item>
+    </style>
+
+    <style name="AppTheme.NoActionBar" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="ic_discard">@mipmap/ic_action_discard_holo_light</item>
+        <item name="ic_new">@mipmap/ic_action_new_holo_light</item>
+        <item name="ic_back">@mipmap/ic_action_back_holo_light</item>
+        <item name="ic_drawer">@mipmap/ic_ab_drawer_holo_light</item>
+        <item name="ic_settings">@mipmap/ic_action_settings_holo_light</item>
+        <item name="ic_save">@mipmap/ic_action_done_holo_light</item>
+        <item name="ic_cancel">@mipmap/ic_action_cancel_holo_light</item>
+    </style>
+-->
+
+    <style name="AppTheme.Red" parent="AppTheme">
+        <item name="android:colorPrimary">@color/primaryRed</item>
+        <item name="android:colorPrimaryDark">@color/primaryDarkRed</item>
+
+        <item name="android:colorAccent">@color/accentRed</item>
+        <item name="android:actionBarStyle">@style/ActionBarRed</item>
+    </style>
+
+    <style name="ActionBar" parent="android:Widget.Material.ActionBar">
+
+    </style>
+
+    <style name="ActionBarRed"
+        parent="android:Widget.Material.ActionBar">
+        <item name="android:titleTextStyle">@style/TitleTextStyleRed</item>
+        <item name="android:background">@color/primaryRed</item>
+        <item name="android:elevation">@dimen/action_bar_elevation</item>
+    </style>
+
+    <style name="TitleTextStyleRed"
+        parent="android:TextAppearance.Material.Widget.ActionBar.Title">
+        <item name="android:textColor">@color/actionBarTextRed</item>
+    </style>
+
+    <style name="SmallText"
+        parent="android:TextAppearance.Material.Small">
+    </style>
+
+    <style name="SmallTextBold"
+        parent="android:TextAppearance.Material.Small">
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="MediumText"
+        parent="android:TextAppearance.Material.Medium">
+    </style>
+
+    <style name="MediumTextBold"
+        parent="android:TextAppearance.Material.Medium">
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="LargeText"
+        parent="android:TextAppearance.Material.Large">
+    </style>
+
+    <style name="LargeTextBold"
+        parent="android:TextAppearance.Material.Large">
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="HeaderTextStyle"
+        parent="android:Widget.Material.ActionBar.TabText">
+        <item name="android:textSize">18sp</item>
+        <item name="android:textStyle">bold|italic</item>
+    </style>
+
+    <!-- list header text -->
+    <style name="ListHeaderTextStyle"
+        parent="android:Widget.Material.ActionBar.TabText">
+        <!--<item name="android:textColor">@color/frag_title_text</item>-->
+        <item name="android:textSize">18sp</item>
+        <item name="android:textStyle">bold|italic</item>
+        <!--<item name="android:background">@color/disabled</item>-->
+    </style>
+
+    <!-- title text -->
+    <style name="FragmentTitleTextStyle"
+        parent="android:Widget.Material.ActionBar.TabText">
+        <!--<item name="android:textColor">@color/frag_title_text</item>-->
+        <item name="android:textSize">18sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+    <style name="ProgressBar" parent="android:Widget.Material.Light.ProgressBar.Horizontal"/>
+</resources>

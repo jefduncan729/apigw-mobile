@@ -7,6 +7,7 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import com.axway.apigw.android.Constants;
+import com.axway.apigw.android.db.DbHelper;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -41,14 +42,14 @@ public class ServerInfo {
 		if (c == null)
 			return rv;
 		rv = new ServerInfo();
-//		rv.setStatus(c.getInt(DbHelper.ConnMgrColumns.IDX_STATUS));
-//        rv.setCertTrusted(c.getInt(DbHelper.ConnMgrColumns.IDX_FLAG) == Constants.FLAG_CERT_TRUSTED);
-//		rv.setId(c.getLong(DbHelper.ConnMgrColumns.IDX_ID));
-//		rv.setHost(c.getString(DbHelper.ConnMgrColumns.IDX_HOST));
-//		rv.setPort(c.getInt(DbHelper.ConnMgrColumns.IDX_PORT));
-//		rv.setSsl(c.getInt(DbHelper.ConnMgrColumns.IDX_USE_SSL) == 1);
-//		rv.setUser(c.getString(DbHelper.ConnMgrColumns.IDX_USER));
-//		rv.setPasswd(c.getString(DbHelper.ConnMgrColumns.IDX_PASS));
+		rv.setStatus(c.getInt(DbHelper.ConnMgrColumns.IDX_STATUS));
+        rv.setCertTrusted(c.getInt(DbHelper.ConnMgrColumns.IDX_FLAG) == Constants.FLAG_CERT_TRUSTED);
+		rv.setId(c.getLong(DbHelper.ConnMgrColumns.IDX_ID));
+		rv.setHost(c.getString(DbHelper.ConnMgrColumns.IDX_HOST));
+		rv.setPort(c.getInt(DbHelper.ConnMgrColumns.IDX_PORT));
+		rv.setSsl(c.getInt(DbHelper.ConnMgrColumns.IDX_USE_SSL) == 1);
+		rv.setUser(c.getString(DbHelper.ConnMgrColumns.IDX_USER));
+		rv.setPasswd(c.getString(DbHelper.ConnMgrColumns.IDX_PASS));
 		return rv;
 	}
 	
@@ -182,45 +183,45 @@ public class ServerInfo {
 	public static ServerInfo fromBundle(Bundle args) {
         if (args == null)
             return null;
-//		long id = args.getLong(DbHelper.ConnMgrColumns._ID, 0);
-//        if (id == 0) {
-//            return null;
-//        }
+		long id = args.getLong(DbHelper.ConnMgrColumns._ID, 0);
+        if (id == 0) {
+            return null;
+        }
 		ServerInfo rv = new ServerInfo();
-//        rv.setStatus(args.getInt(DbHelper.ConnMgrColumns.STATUS, Constants.STATUS_ACTIVE));
-//        rv.setId(id);
-//        rv.setHost(args.getString(DbHelper.ConnMgrColumns.HOST, null));
-//        rv.setUser(args.getString(DbHelper.ConnMgrColumns.USER, null));
-//        rv.setPasswd(args.getString(DbHelper.ConnMgrColumns.PASS, null));
-//        rv.setPort(args.getInt(DbHelper.ConnMgrColumns.PORT, 0));
-//        rv.setSsl(args.getBoolean(DbHelper.ConnMgrColumns.USE_SSL, true));
-//        rv.setCertTrusted(args.getBoolean(DbHelper.ConnMgrColumns.FLAG, true));
+        rv.setStatus(args.getInt(DbHelper.ConnMgrColumns.STATUS, Constants.STATUS_ACTIVE));
+        rv.setId(id);
+        rv.setHost(args.getString(DbHelper.ConnMgrColumns.HOST, null));
+        rv.setUser(args.getString(DbHelper.ConnMgrColumns.USER, null));
+        rv.setPasswd(args.getString(DbHelper.ConnMgrColumns.PASS, null));
+        rv.setPort(args.getInt(DbHelper.ConnMgrColumns.PORT, 0));
+        rv.setSsl(args.getBoolean(DbHelper.ConnMgrColumns.USE_SSL, true));
+        rv.setCertTrusted(args.getBoolean(DbHelper.ConnMgrColumns.FLAG, true));
 		return rv;
 	}
 	
 	public Bundle toBundle() {
 		Bundle args = new Bundle();
-//		args.putInt(DbHelper.ConnMgrColumns.STATUS, getStatus());
-//		args.putLong(DbHelper.ConnMgrColumns._ID, getId());
-//		args.putString(DbHelper.ConnMgrColumns.HOST, getHost());
-//		args.putString(DbHelper.ConnMgrColumns.USER, getUser());
-//		args.putString(DbHelper.ConnMgrColumns.PASS, getPasswd());
-//		args.putInt(DbHelper.ConnMgrColumns.PORT, getPort());
-//		args.putBoolean(DbHelper.ConnMgrColumns.USE_SSL, isSsl());
-//        args.putBoolean(DbHelper.ConnMgrColumns.FLAG, isCertTrusted());
+		args.putInt(DbHelper.ConnMgrColumns.STATUS, getStatus());
+		args.putLong(DbHelper.ConnMgrColumns._ID, getId());
+		args.putString(DbHelper.ConnMgrColumns.HOST, getHost());
+		args.putString(DbHelper.ConnMgrColumns.USER, getUser());
+		args.putString(DbHelper.ConnMgrColumns.PASS, getPasswd());
+		args.putInt(DbHelper.ConnMgrColumns.PORT, getPort());
+		args.putBoolean(DbHelper.ConnMgrColumns.USE_SSL, isSsl());
+        args.putBoolean(DbHelper.ConnMgrColumns.FLAG, isCertTrusted());
 		return args;
 	}
 
     public ContentValues toValues() {
         ContentValues args = new ContentValues();
-//        args.put(DbHelper.ConnMgrColumns.STATUS, getStatus());
-//        args.put(DbHelper.ConnMgrColumns._ID, getId());
-//        args.put(DbHelper.ConnMgrColumns.HOST, getHost());
-//        args.put(DbHelper.ConnMgrColumns.USER, getUser());
-//        args.put(DbHelper.ConnMgrColumns.PASS, getPasswd());
-//        args.put(DbHelper.ConnMgrColumns.PORT, getPort());
-//        args.put(DbHelper.ConnMgrColumns.USE_SSL, isSsl());
-//        args.put(DbHelper.ConnMgrColumns.FLAG, isCertTrusted());
+        args.put(DbHelper.ConnMgrColumns.STATUS, getStatus());
+        args.put(DbHelper.ConnMgrColumns._ID, getId());
+        args.put(DbHelper.ConnMgrColumns.HOST, getHost());
+        args.put(DbHelper.ConnMgrColumns.USER, getUser());
+        args.put(DbHelper.ConnMgrColumns.PASS, getPasswd());
+        args.put(DbHelper.ConnMgrColumns.PORT, getPort());
+        args.put(DbHelper.ConnMgrColumns.USE_SSL, isSsl());
+        args.put(DbHelper.ConnMgrColumns.FLAG, isCertTrusted());
         return args;
     }
 

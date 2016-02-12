@@ -1,7 +1,9 @@
-package com.axway.apigw.android;
+package com.axway.apigw.android.api;
 
 import android.util.Log;
 
+import com.axway.apigw.android.BaseApp;
+import com.axway.apigw.android.Constants;
 import com.axway.apigw.android.model.ServerInfo;
 import com.google.gson.JsonObject;
 

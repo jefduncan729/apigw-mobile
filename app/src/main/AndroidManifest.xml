@@ -1,12 +1,40 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.axway.apigw.android">
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
 
     <application
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@mipmap/ic_axwaylogo"
+        android:name=".BaseApp"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+
+        <provider
+            android:name=".db.DbProvider"
+            android:authorities="com.axway.apigw.android"
+            android:exported="false"
+            />
+        <!--android:theme="@style/AppTheme.NoActionBar"-->
+
+        <activity android:name=".activity.LauncherActivity"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+
+        <activity android:name=".activity.ConnMgrActivity"
+            android:label="@string/conn_mgr">
+        </activity>
+
+        <activity android:name=".activity.ConnMgrEditActivity" android:label="@string/conn_mgr">
+        </activity>
+
+        <activity android:name=".activity.TopologyActivity" android:label="@string/app_name">
+        </activity>
 
     </application>
 

@@ -11,6 +11,7 @@ import android.graphics.drawable.Drawable;
 import android.util.Log;
 import android.util.SparseArray;
 
+import com.axway.apigw.android.api.TopologyModel;
 import com.axway.apigw.android.model.ServerInfo;
 import com.squareup.otto.Bus;
 import com.vordel.api.topology.model.Topology;
@@ -52,8 +53,8 @@ public class BaseApp extends Application {
         super.onCreate();
         _statDrawables = new SparseArray<>();
         Resources res = getResources();
-//        _statDrawables.put(TopologyModel.GATEWAY_STATUS_RUNNING, res.getDrawable(R.mipmap.thumbs_up, null));
-//        _statDrawables.put(TopologyModel.GATEWAY_STATUS_NOT_RUNNING, res.getDrawable(R.mipmap.thumbs_down, null));
+        _statDrawables.put(TopologyModel.GATEWAY_STATUS_RUNNING, res.getDrawable(R.mipmap.thumbs_up, null));
+        _statDrawables.put(TopologyModel.GATEWAY_STATUS_NOT_RUNNING, res.getDrawable(R.mipmap.thumbs_down, null));
         _colors = new int[BG_COLOR_IDS.length];
         for (int i = 0; i < BG_COLOR_IDS.length; i++) {
             _colors[i] = res.getColor(BG_COLOR_IDS[i]);

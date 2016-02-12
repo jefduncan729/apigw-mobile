@@ -1,4 +1,4 @@
-package com.axway.apigw.android;
+package com.axway.apigw.android.api;
 
 import android.content.AsyncTaskLoader;
 import android.content.Context;
