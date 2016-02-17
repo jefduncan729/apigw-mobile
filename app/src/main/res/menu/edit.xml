@@ -4,14 +4,14 @@
     <item
         android:id="@id/action_save"
         android:orderInCategory="10"
-        app:showAsAction="ifRoom"
+        android:showAsAction="ifRoom"
         android:icon="?attr/ic_save"
         android:title="@string/action_save"/>
 
     <item
         android:id="@id/action_cancel"
         android:orderInCategory="20"
-        app:showAsAction="ifRoom"
+        android:showAsAction="ifRoom"
         android:icon="?attr/ic_cancel"
         android:title="@string/action_cancel"/>
 </menu>

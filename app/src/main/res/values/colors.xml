@@ -10,4 +10,6 @@
     <color name="primaryDarkRed">#D50000</color>
     <color name="accentRed">#F44336</color>
     <color name="actionBarTextRed">#FFFFFFFF</color>
+
+    <color name="axway_blue">#FF00517c</color>
 </resources>

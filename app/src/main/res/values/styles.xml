@@ -12,9 +12,9 @@
         <!-- Customize your theme here. -->
 <!--
         <item name="colorPrimary">@color/colorPrimary</item>
-        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
 -->
+        <item name="colorPrimaryDark">@color/axway_blue</item>
 
         <item name="ic_discard">@mipmap/ic_action_discard_holo_light</item>
         <item name="ic_new">@mipmap/ic_action_new_holo_light</item>
