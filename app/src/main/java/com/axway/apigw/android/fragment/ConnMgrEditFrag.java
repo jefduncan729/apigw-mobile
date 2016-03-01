@@ -118,7 +118,7 @@ public class ConnMgrEditFrag extends EditFrag<ServerInfo> implements View.OnClic
     }
 
     @Override
-    public void collect(ServerInfo i) {
+    public void collect(ServerInfo i, Bundle extras) {
         cvh.collect(i);
     }
 

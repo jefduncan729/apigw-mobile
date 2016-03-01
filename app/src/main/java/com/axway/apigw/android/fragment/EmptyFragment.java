@@ -1,6 +1,6 @@
 package com.axway.apigw.android.fragment;
 
-import android.app.Fragment;
+import android.support.v4.app.Fragment;
 
 /**
  * Created by su on 2/3/2016.

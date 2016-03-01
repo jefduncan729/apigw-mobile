@@ -36,9 +36,13 @@ public class ApiClient {
         forceTrailingSlash = false;
     }
 
+    protected ApiClient(ServerInfo srvr) {
+        this();
+        this.srvr = srvr;
+    }
+
     public static ApiClient from(ServerInfo srvr) {
-        ApiClient rv = new ApiClient();
-        rv.srvr = srvr;
+        ApiClient rv = new ApiClient(srvr);
         return rv;
     }
 
@@ -132,6 +136,9 @@ public class ApiClient {
         executeAsyncRequest(createRequest("/"), callback);
     }
 
+    public ServerInfo getServerInfo() {
+        return srvr;
+    }
 //    protected void sendRequest(final String endpoint, final ResponseHandler handler) {
 //        String cred = Credentials.basic(srvr.getUser(), srvr.getPasswd());
 //        final Request req = new Request.Builder()

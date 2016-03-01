@@ -11,5 +11,11 @@
     <color name="accentRed">#F44336</color>
     <color name="actionBarTextRed">#FFFFFFFF</color>
 
+    <color name="fab_color_1">#00517c</color>
+    <color name="fab_color_1_muted">#2962FF</color>
+    <color name="fab_color_2">#F44336</color>
+    <color name="fab_color_2_muted">#D50000</color>
+
+
     <color name="axway_blue">#FF00517c</color>
 </resources>

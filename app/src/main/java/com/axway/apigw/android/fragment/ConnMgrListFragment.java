@@ -6,6 +6,7 @@ import android.app.LoaderManager;
 import android.content.ContentUris;
 import android.content.Context;
 import android.content.CursorLoader;
+import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
 import android.graphics.Paint;
@@ -25,9 +26,11 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.CursorAdapter;
 
+import com.axway.apigw.android.BaseApp;
 import com.axway.apigw.android.Constants;
 import com.axway.apigw.android.R;
 import com.axway.apigw.android.db.DbHelper;
+import com.axway.apigw.android.event.ActionEvent;
 import com.axway.apigw.android.model.ServerInfo;
 import com.axway.apigw.android.view.BasicViewHolder;
 
@@ -38,22 +41,16 @@ public class ConnMgrListFragment extends ListFragment implements LoaderManager.L
 	private static final int IDX_NON_SSL = 0;
 	private static final int IDX_TRUSTED = 1;
 	private static final int IDX_NOT_TRUSTED = 2;
-	
-	public interface Callbacks {
-		public void onDelete(Uri uri, String name);
-		public void onAdd();
-		public void onEdit(Uri uri);
-		public void onStatusChange(Uri uri, int newStatus);
-		public void onCheckCert(Uri uri);
-		public void onRemoveTrustStore();
-		public void onViewCert(Uri uri);
-	}
-	
+
 	private CursorAdapter adapter;
-	private Callbacks callbacks;
 	private Uri ctxUri;
 	private String ctxName;
 	private Drawable[] drawables;
+
+	public static ConnMgrListFragment newInstance() {
+		ConnMgrListFragment rv = new ConnMgrListFragment();
+		return rv;
+	}
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -64,13 +61,11 @@ public class ConnMgrListFragment extends ListFragment implements LoaderManager.L
 	}
 
 	@Override
-	public void onAttach(Activity activity) {
-		super.onAttach(activity);
-		if (activity instanceof Callbacks)
-			callbacks = (Callbacks)activity;
+	public void onAttach(Context ctx) {
+		super.onAttach(ctx);
 		drawables = new Drawable[DRAWABLE_IDS.length];
 		for (int i = 0; i < DRAWABLE_IDS.length; i++)
-			drawables[i] = activity.getResources().getDrawable(DRAWABLE_IDS[i], null);
+			drawables[i] = ctx.getResources().getDrawable(DRAWABLE_IDS[i], null);
 	}
 
 	@Override
@@ -93,13 +88,9 @@ public class ConnMgrListFragment extends ListFragment implements LoaderManager.L
 		boolean rv = true;
 		switch (item.getItemId()) {
 			case R.id.action_add:
-				if (callbacks != null)
-					callbacks.onAdd();
+            case R.id.action_remove_trust:
+                BaseApp.post(new ActionEvent(item.getItemId()));
 			break;
-			case R.id.action_remove_trust:
-				if (callbacks != null)
-					callbacks.onRemoveTrustStore();
-			break;			
 			default:
 				rv = super.onOptionsItemSelected(item); 
 		}
@@ -109,37 +100,38 @@ public class ConnMgrListFragment extends ListFragment implements LoaderManager.L
 	@Override
 	public void onItemClick(AdapterView<?> listView, View view, int pos, long id) {
 		Cursor c = (Cursor)listView.getItemAtPosition(pos);
-		if (callbacks == null || c == null)
-			return;
 		Uri uri = ContentUris.withAppendedId(DbHelper.ConnMgrColumns.CONTENT_URI, c.getLong(DbHelper.ConnMgrColumns.IDX_ID));
-		callbacks.onEdit(uri);
+        BaseApp.post(new ActionEvent(R.id.action_edit, new Intent(Intent.ACTION_EDIT, uri)));
 	}
 
 	@Override
 	public boolean onContextItemSelected(MenuItem item) {
-		if (callbacks == null || ctxUri == null)
+		if (ctxUri == null)
 			return false;
 		boolean rv = true;
+        Intent i = new Intent();
+        i.setData(ctxUri);
 		switch (item.getItemId()) {
 			case R.id.action_delete:
-				callbacks.onDelete(ctxUri, ctxName);
+                i.putExtra(Constants.EXTRA_ITEM_NAME, ctxName);
 			break;
 			case R.id.action_enable:
-				callbacks.onStatusChange(ctxUri, Constants.STATUS_ACTIVE);
+                i.putExtra(Constants.EXTRA_GATEWAY_STATUS, Constants.STATUS_ACTIVE);
 			break;
 			case R.id.action_disable:
-				callbacks.onStatusChange(ctxUri, Constants.STATUS_INACTIVE);
+                i.putExtra(Constants.EXTRA_GATEWAY_STATUS, Constants.STATUS_INACTIVE);
 			break;
 			case R.id.action_check_cert:
-				callbacks.onCheckCert(ctxUri);
 			break;
 			case R.id.action_view_cert:
-				callbacks.onViewCert(ctxUri);
 				break;
 			default:
-				rv = super.onContextItemSelected(item);
+				rv = false;
 		}
-		return rv;
+        if (!rv)
+            return super.onContextItemSelected(item);
+        BaseApp.post(new ActionEvent(item.getItemId(), i));
+		return true;
 	}
 
 	@Override
@@ -156,13 +148,10 @@ public class ConnMgrListFragment extends ListFragment implements LoaderManager.L
 		ctxName = si.getHost() + ":" + Integer.toString(si.getPort());    //c.getString(ConnMgrColumns.IDX_HOST) + ":" + Integer.toString(c.getInt(ConnMgrColumns.IDX_PORT));
 		menu.setHeaderTitle(si.getHost());  //c.getString(ConnMgrColumns.IDX_HOST));
 		menu.add(0, R.id.action_delete, 1, R.string.action_delete);
-//		int status = c.getInt(ConnMgrColumns.IDX_STATUS);
 		if (si.getStatus() == Constants.STATUS_ACTIVE)
 			menu.add(0, R.id.action_disable, 2, R.string.action_disable);
 		else
 			menu.add(0, R.id.action_enable, 3, R.string.action_enable);
-//		boolean ssl = si.isSsl(); //(c.getInt(ConnMgrColumns.IDX_USE_SSL) == 1);
-//        boolean trusted = si.isCertTrusted();   //(c.getInt(ConnMgrColumns.IDX_FLAG) == Constants.FLAG_CERT_TRUSTED);
 		if (si.isSsl()) {
 			if (si.isCertTrusted()) {
 				menu.add(0, R.id.action_view_cert, 4, R.string.action_view_cert);
@@ -204,10 +193,7 @@ public class ConnMgrListFragment extends ListFragment implements LoaderManager.L
 			if (holder == null)
 				return;
             ServerInfo si = ServerInfo.from(cursor);
-//            String h = cursor.getString(ConnMgrColumns.IDX_HOST);
-//            int p = cursor.getInt(ConnMgrColumns.IDX_PORT);
             holder.setText1(si.getHost() + ":" + Integer.toString(si.getPort()));    //h + ":" + Integer.toString(p));
-//            int status = cursor.getInt(ConnMgrColumns.IDX_STATUS);
             int pf = holder.getTextView1().getPaintFlags();
             if (si.getStatus() == Constants.STATUS_ACTIVE)
                 pf = pf & ~Paint.STRIKE_THRU_TEXT_FLAG;    //pf holder.getTextView1().setPaintFlags(holder.getTextView1().getPaintFlags()  & ~Paint.STRIKE_THRU_TEXT_FLAG);

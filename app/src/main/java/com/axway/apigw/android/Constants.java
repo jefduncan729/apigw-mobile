@@ -91,6 +91,7 @@ public class Constants {
     public static final String KEY_APP_VERSION = EXTRA_BASE + "appVersion";
     public static final String KEY_LAST_NAV_ID = EXTRA_BASE + "lastNavId";
     public static final String KEY_SHOW_ADVISORIES = EXTRA_BASE + "showAdvisoryTopics";
+    public static final String KEY_WIFI_ONLY = EXTRA_BASE + "wifiOnly";
     public static final String KEY_KPS_FOLDER = EXTRA_BASE + "kpsFolder";
     public static final String KEY_DEPLOY_FOLDER = EXTRA_BASE + "deployFolder";
     public static final boolean DEF_SHOW_NODE_MGRS = false;

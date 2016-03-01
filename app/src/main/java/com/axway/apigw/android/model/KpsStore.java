@@ -2,8 +2,12 @@ package com.axway.apigw.android.model;
 
 import android.text.TextUtils;
 
+import com.axway.apigw.android.api.KpsModel;
+import com.google.gson.JsonObject;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by su on 10/2/2014.
@@ -273,6 +277,44 @@ public class KpsStore extends KpsBase {
         List<String> indexes = getConfig().getIndexes();
         if (indexes != null && indexes.contains(fldName))
             rv = true;
+        return rv;
+    }
+
+    public boolean isPrimaryKey(String fldName) {
+        boolean rv = false;
+        String pk = getConfig().getKey();
+        if (fldName != null && fldName.equals(pk))
+            rv = true;
+        return rv;
+    }
+
+    public JsonObject newObject() {
+        JsonObject rv = new JsonObject();
+        KpsType type = KpsModel.getInstance().getTypeById(getTypeId());
+        for (Map.Entry<String, String> p : type.getProperties().entrySet()) {
+            String nm = p.getKey();
+            String cls = p.getValue();
+            if (isGeneratedField(nm))
+                continue;
+            if ("java.lang.String".equals(cls)) {
+                rv.addProperty(nm, "");
+            }
+            else if ("java.lang.Long".equals(cls)) {
+                rv.addProperty(nm, (long) 0);
+            }
+            else if ("java.lang.Boolean".equals(cls)) {
+                rv.addProperty(nm, false);
+            }
+            else if ("java.lang.Integer".equals(cls)) {
+                rv.addProperty(nm, (int)0);
+            }
+            else if ("java.lang.Double".equals(cls)) {
+                rv.addProperty(nm, (double)0);
+            }
+            else if ("java.lang.Byte".equals(cls)) {
+                rv.addProperty(nm, (byte)0x00);
+            }
+        }
         return rv;
     }
 }

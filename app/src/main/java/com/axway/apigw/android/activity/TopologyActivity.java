@@ -2,6 +2,7 @@ package com.axway.apigw.android.activity;
 
 import android.app.LoaderManager;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.Loader;
 import android.os.Bundle;
 import android.os.Message;
@@ -17,6 +18,7 @@ import com.axway.apigw.android.Constants;
 import com.axway.apigw.android.JsonHelper;
 import com.axway.apigw.android.R;
 import com.axway.apigw.android.api.ApiClient;
+import com.axway.apigw.android.api.DeploymentModel;
 import com.axway.apigw.android.api.TopologyLoader;
 import com.axway.apigw.android.api.TopologyModel;
 import com.axway.apigw.android.event.ActionEvent;
@@ -24,6 +26,7 @@ import com.axway.apigw.android.event.CertValidationEvent;
 import com.axway.apigw.android.event.ClickEvent;
 import com.axway.apigw.android.fragment.EmptyFragment;
 import com.axway.apigw.android.fragment.TopologyFragment;
+import com.axway.apigw.android.model.DeploymentDetails;
 import com.axway.apigw.android.model.ServerInfo;
 import com.axway.apigw.android.view.ServiceViewHolder;
 import com.google.gson.JsonObject;
@@ -37,11 +40,14 @@ import java.security.cert.CertPath;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import okhttp3.Call;
 import okhttp3.Callback;
+import okhttp3.Request;
 import okhttp3.Response;
 
 /**
@@ -54,16 +60,18 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
     public static final int MSG_CERT_ERR = Constants.MSG_BASE + 1001;
     public static final int MSG_LOADER_FINISHED = Constants.MSG_BASE + 1002;
 
+    public static final int REQ_EDIT_SVC = 1;
+    public static final int REQ_ADD_SVC = 2;
+
     public static final int TOPO_LOADER = 1;
     public static final int STATUS_LOADER = 2;
 
-    @Bind(R.id.swipe_refresh)
-    SwipeRefreshLayout swipeRefresh;
+    @Bind(R.id.swipe_refresh) SwipeRefreshLayout swipeRefresh;
     @Bind(R.id.container01) ViewGroup ctr01;
     @Bind(R.id.toolbar) Toolbar toolbar;
 
-    private ApiClient client;
     private TopologyModel model;
+    private Group orphanedGroup;
 
     @Override
     protected boolean onHandleMessage(Message msg) {
@@ -96,14 +104,8 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
             }
         });
         showProgress(true);
-        Bundle b = getIntent().getBundleExtra(Constants.EXTRA_SERVER_INFO);
-        ServerInfo server = ServerInfo.fromBundle(b);
-        if (server == null) {
-            finishWithAlert("Please pass server info");
-            return;
-        }
-        client = ApiClient.from(server);    //new ServerInfo("10.71.100.196", 8090, true, "admin", "changeme"));
-        model = new TopologyModel(client);
+        ServerInfo server = BaseApp.getInstance().getCurrentServer();
+        model = TopologyModel.getInstance();    //new TopologyModel(BaseApp.getInstance().getApiClient());
         toolbar.setTitle("Topology");
         toolbar.setSubtitle(server.displayString());
         getLoaderManager().initLoader(TOPO_LOADER, null, this);
@@ -120,6 +122,18 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
     protected void onPause() {
         super.onPause();
         BaseApp.bus().unregister(this);
+    }
+
+    @Override
+    protected void onStop() {
+        Log.d(TAG, "onStop");
+        super.onStop();
+    }
+
+    @Override
+    protected void onDestroy() {
+        Log.d(TAG, "onDestroy");
+        super.onDestroy();
     }
 
     @Override
@@ -145,42 +159,53 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
         if (t != null) {
             if (t instanceof ServiceViewHolder) {
                 ServiceViewHolder svh = (ServiceViewHolder)t;
-                String instId = (String)svh.getText1Tag();
-                showToast(String.format("select: %s", instId));
+                Service svc = (Service)svh.getData();
+                editService(svc);
                 return;
             }
             if (t instanceof String) {
                 String[] tkns = ((String)t).split(":");
                 if (tkns.length == 2) {
                     if ("add_inst".equals(tkns[0])) {
-                        showToast(String.format("add inst: %s", tkns[1]));
+                        addService(tkns[1]);
                     }
                 }
             }
         }
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == REQ_ADD_SVC || requestCode == REQ_EDIT_SVC) {
+            if (resultCode == RESULT_OK) {
+                getMsgHandler().sendEmptyMessage(Constants.MSG_REFRESH);
+            }
+            return;
+        }
+        super.onActivityResult(requestCode, resultCode, data);
+    }
+
     private void resetClient() {
         BaseApp.resetSocketFactory();
-        client = null;
     }
 
-/*
-    private void checkCert() {
-        client.checkCert(new Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-                final CertPath cp = BaseApp.certPathFromThrowable(e);
-                if (cp != null)
-                    post(new CertValidationEvent("10.71.100.196_8090", cp));
-            }
-
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-            }
-        });
+    private void editService(Service svc) {
+        Intent i = new Intent(this, EditServiceActivity.class);
+        i.setAction(Intent.ACTION_EDIT);
+        Group g = model.getInstanceGroup(svc.getId());
+        i.putExtra(Constants.EXTRA_JSON_ITEM, JsonHelper.getInstance().toJson(svc).toString());
+        i.putExtra(Constants.EXTRA_GROUP_ID, g.getId());
+        startActivityForResult(i, REQ_EDIT_SVC);
     }
-*/
+
+    private void addService(String grpId) {
+        Intent i = new Intent(this, EditServiceActivity.class);
+        Service svc = new Service();
+        i.setAction(Intent.ACTION_INSERT);
+        i.putExtra(Constants.EXTRA_JSON_ITEM, JsonHelper.getInstance().toJson(svc).toString());
+        i.putExtra(Constants.EXTRA_GROUP_ID, grpId);
+        startActivityForResult(i, REQ_ADD_SVC);
+    }
 
     protected void post(final Object evt) {
         runOnUiThread(new Runnable() {
@@ -193,8 +218,10 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
 
     private void refresh() {
         showProgress(true);
-        replaceFragment(ctr01.getId(), EmptyFragment.newInstance(), "topo");
+//        replaceFragment(ctr01.getId(), EmptyFragment.newInstance(), "topo");
+        getSupportFragmentManager().beginTransaction().replace(ctr01.getId(), EmptyFragment.newInstance(), "topo").commit();
         Log.d(TAG, "initLoader");
+        getLoaderManager().destroyLoader(TOPO_LOADER);
         getLoaderManager().initLoader(TOPO_LOADER, null, this);
     }
 
@@ -226,26 +253,6 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
                 showToast("Cancelled");
             }
         });
-//        Dialog dlg = new AlertDialog.Builder(this)
-//                .setTitle(getString(R.string.cert_not_trusted))
-//                .setMessage(sb.toString())
-//                .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
-//                    @Override
-//                    public void onClick(DialogInterface dialogInterface, int i) {
-//                        Toast.makeText(TopologyActivity.this, "Cancelled", Toast.LENGTH_SHORT).show();
-//                    }
-//                })
-//                .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-//                    @Override
-//                    public void onClick(DialogInterface dialogInterface, int i) {
-//                        BaseApp.keystoreManager().addTrustedCert(alias, cp);
-//                        Toast.makeText(TopologyActivity.this, "Cert trusted " + alias, Toast.LENGTH_SHORT).show();
-//                        resetClient();
-//                        refresh();
-//                    }
-//                })
-//                .create();
-//        dlg.show();
     }
 
     @Subscribe
@@ -268,17 +275,20 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
                 confirmStartGateway(instId, false);
                 break;
             case R.id.action_gateway_messaging:
-                msg = "messaging";
+                messagingActivity(instId);
                 break;
             case R.id.action_gateway_kps:
-                msg = "kps";
+                kpsActivity(instId);
                 break;
             case R.id.action_deployment_details:
-                msg = "deploy details";
+                requestDeployDetails(instId);
                 break;
             case R.id.action_save_deploy_archive:
-                testAddGateway();
-//                msg = "save archive";
+                msg = "save deployment archive";
+                break;
+            case R.id.action_policy_props:
+            case R.id.action_env_props:
+                manageProperties(instId, evt.id);
                 break;
         }
         if (!TextUtils.isEmpty(msg)) {
@@ -286,6 +296,55 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
         }
     }
 
+    private void messagingActivity(String instId) {
+        Intent i = new Intent(this, MessagingActivity.class);
+        i.putExtra(Constants.EXTRA_INSTANCE_ID, instId);
+        startActivity(i);
+    }
+
+    private void kpsActivity(String instId) {
+        Intent i = new Intent(this, KpsActivity.class);
+        i.putExtra(Constants.EXTRA_INSTANCE_ID, instId);
+        startActivity(i);
+    }
+
+    private void requestDeployDetails(String instId) {
+        DeploymentDetails dd = DeploymentModel.getInstance().getDeploymentDetails(instId);
+        if (dd == null) {
+            DeploymentModel.getInstance().getDeploymentDetails(new DdCallback(instId));
+        }
+        else {
+            showDeployDetails(instId);
+        }
+    }
+
+    private void showDeployDetails(String instId) {
+//        Log.d(TAG, String.format("showDeployDetails: %s, %s", instId, dd));
+        Intent i = new Intent(this, DeployDetailsActivity.class);
+        i.putExtra(Constants.EXTRA_INSTANCE_ID, instId);
+        startActivity(i);
+    }
+
+    private void manageProperties(String instId, int what) {
+//        DeploymentDetails dd = DeploymentModel.getInstance().getDeploymentDetails(instId);
+//        if (dd == null)
+//            return;
+//        DeploymentDetails.Props props = (what == R.id.action_policy_props ? dd.getPolicyProperties() : dd.getEnvironmentProperties());
+        Log.d(TAG, String.format("manageProperties: %s, %s", instId, what));
+        Intent i = new Intent(this, ManagePropsActivity.class);
+        i.putExtra(Constants.EXTRA_INSTANCE_ID, instId);
+        i.putExtra(Constants.EXTRA_ITEM_TYPE, what);
+        startActivity(i);
+    }
+
+    private void testDeployClient() {
+        Group g = model.getGroupById("group-6");
+        ApiClient client = BaseApp.getInstance().getApiClient();
+        Request req = client.createRequest(String.format("api/deployment/archive/%s", g.getId()));
+        client.executeAsyncRequest(req, new TestCallback());
+    }
+
+/*
     private void testAddGateway() {
         Group g = model.getGroupById("group-6");
         Service svc = new Service();
@@ -297,6 +356,7 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
         svc.setType(Topology.ServiceType.gateway);
         model.addGateway(g, svc, 28080, new PostCallback());
     }
+*/
 
     private void confirmStartGateway(final String instId, final boolean start) {
         String a = (start ? "start" : "stop");
@@ -306,18 +366,6 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
                 performStartGateway(instId, start);
             }
         });
-//        AlertDialog dlg = new AlertDialog.Builder(this)
-//                .setTitle(R.string.confirm)
-//                .setMessage(getString(R.string.touch_to, a, instId))
-//                .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-//                    @Override
-//                    public void onClick(DialogInterface dialogInterface, int i) {
-//                        performStartGateway(instId, start);
-//                    }
-//                })
-//                .setNegativeButton(android.R.string.no, Constants.NOOP_LISTENER)
-//                .create();
-//        dlg.show();
     }
 
     private void performStartGateway(final String instId, boolean start) {
@@ -340,14 +388,20 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
     }
 
     private void performRemoveGateway(final String instId) {
-        model.removeGateway(instId, true, new DeleteCallback(instId));
+        showProgress(true);
+        Group grp = model.getInstanceGroup(instId);
+        if (grp != null && grp.getServices().size() == 1) {
+            orphanedGroup = grp;
+        }
+        model.removeGateway(instId, true, new DeleteSvcCallback(instId));
     }
 
     @Override
     public Loader<Topology> onCreateLoader(int i, Bundle bundle) {
         Log.d(TAG, String.format("onCreateLoader: %d", i));
         if (i == TOPO_LOADER) {
-            return new TopologyLoader(this, client);
+            model.reset();
+            return new TopologyLoader(this, BaseApp.getInstance().getApiClient());
         }
         return null;
     }
@@ -366,10 +420,14 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
 
     private void onTopologyLoaded() {
         if (model.getTopology() == null) {
-            Log.d(TAG, "no topology");
+            ServerInfo svr = BaseApp.getInstance().getCurrentServer();
+            finishWithAlert(String.format("Could not load topology. Is %s available?", svr == null ? "Node Manager" : svr.displayString()));
             return;
         }
+
+        orphanedGroup = null;
         replaceFragment(ctr01.getId(), TopologyFragment.newInstance(model), "topo");
+        DeploymentModel.getInstance().getDeploymentDetails(new DdCallback());
         Topology t = model.getTopology();
         Collection<Service> svcs = t.getServices(Topology.ServiceType.gateway);
         for (Service s: svcs) {
@@ -383,27 +441,46 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
         if (model != null)
             model.setGatewayStatus(sid, stat);
     }
+/*
 
-    private abstract class BaseCallback implements Callback {
+    protected abstract class BaseCallback implements Callback {
         @Override
         public void onFailure(Call call, IOException e) {
+            showProgress(false);
             Log.e(TAG, String.format("call failed: %s", call), e);
+            showToast(String.format("%s", e.getMessage()));
         }
 
+        @Override
+        public void onResponse(final Call call, final Response response) throws IOException {
+            if (response.isSuccessful()) {
+                showProgress(false);
+                final String body = response.body().string();
+                response.body().close();
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        onSuccessResponse(response.code(), response.message(), body);
+                    }
+                });
+            }
+            else {
+                onFailure(call, new IOException(String.format("%d %s", response.code(), (response.message()))));
+            }
+        }
+
+        abstract protected void onSuccessResponse(int code, String msg, String body);
     }
+*/
+/*
 
     private class PostCallback extends BaseCallback {
         @Override
-        public void onResponse(Call call, Response response) throws IOException {
-            if (response.isSuccessful()) {
-                Log.d(TAG, "POST succeeded");
-                refresh();
-            }
-            else {
-                Log.d(TAG, "POST failed");
-            }
+        protected void onSuccessResponse(int code, String msg, String body) {
+            refresh();
         }
     }
+*/
 
     private class GatewayActionCallback extends BaseCallback {
 
@@ -417,59 +494,120 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
         }
 
         @Override
-        public void onResponse(Call call, Response response) throws IOException {
-            Log.d(TAG, String.format("onResponse: %s", response));
+        protected void onSuccessResponse(int code, String msg, String body) {
             int stat = TopologyModel.GATEWAY_STATUS_UNKNOWN;
-            if (response.isSuccessful()) {
-                JsonObject j = JsonHelper.getInstance().parseAsObject(response.body().string());
-                if (j != null && j.has("result")) {
-                    final String s = j.get("result").getAsString();
-                    stat = TopologyModel.parseStatus(s);
-                }
+            JsonObject j = JsonHelper.getInstance().parseAsObject(body);
+            if (j != null && j.has("result")) {
+                final String s = j.get("result").getAsString();
+                stat = TopologyModel.parseStatus(s);
             }
             final int s = ("stop".equals(action) ? TopologyModel.GATEWAY_STATUS_NOT_RUNNING : stat);
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    updateStatus(sid, s);
-                }
-            });
+            updateStatus(sid, s);
         }
     }
 
-    private void onDeleted(String id, boolean success) {
-        showToast(success ? String.format("%s deleted", id) : String.format("delete failed: %s", id));
+    private void onDeleted(String id) {
+        showToast(String.format("%s deleted", id));
+        if (orphanedGroup != null) {
+            confirmDialog(String.format("Delete empty group %s", orphanedGroup.getName()), new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialogInterface, int i) {
+                    model.removeGroup(orphanedGroup, new BaseCallback() {
+                        @Override
+                        protected void onSuccessResponse(int code, String msg, String body) {
+                            showToast(String.format("%s deleted", orphanedGroup.getName()));
+                            orphanedGroup = null;
+                            refresh();
+                        }
+                    });
+                }
+            });
+            return;
+        }
+        refresh();
     }
 
-    private class DeleteCallback extends BaseCallback {
+    private class DeleteSvcCallback extends BaseCallback {
 
         String sid;
 
-        public DeleteCallback(String sid) {
+        public DeleteSvcCallback(String sid) {
             super();
             this.sid = sid;
         }
 
         @Override
-        public void onResponse(Call call, Response response) throws IOException {
-            Log.d(TAG, String.format("onResponse: %s", response));
-            final boolean success = response.isSuccessful();
-//            if (response.isSuccessful()) {
-//                JsonObject j = JsonHelper.getInstance().parseAsObject(response.body().string());
-//                if (j != null && j.has("result")) {
-//                    final String s = j.get("result").getAsString();
-//                }
-//            }
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    onDeleted(sid, success);
-                }
-            });
+        protected void onSuccessResponse(int code, String msg, String body) {
+            onDeleted(sid);
         }
     }
 
-    private void showProgress(final boolean show) {
+    private class TestCallback extends BaseCallback {
+
+        public TestCallback() {
+            super();
+        }
+
+        @Override
+        protected void onSuccessResponse(int code, String msg, String body) {
+
+        }
+    }
+
+    private class DdCallback extends BaseCallback {
+
+        String instId;
+
+        public DdCallback() {
+            super();
+            instId = null;
+        }
+
+        public DdCallback(String instId) {
+            this();
+            this.instId = instId;
+        }
+
+        @Override
+        protected void onSuccessResponse(int code, String msg, String body) {
+            JsonObject j = JsonHelper.getInstance().parseAsObject(body);
+            if (j == null)
+                return;
+            if (j.has(JsonHelper.PROP_RESULT))
+                j = j.get(JsonHelper.PROP_RESULT).getAsJsonObject();
+//            DeploymentDetails dd = JsonHelper.getInstance().deploymentDetailsFromJson(j);
+            DeploymentModel.getInstance().setDeploymentDetails(j);
+            consistencyCheck();
+            if (instId != null)
+                showDeployDetails(instId);
+        }
+    }
+
+    private void consistencyCheck() {
+        for (Group g: model.getTopology().getGroups(Topology.ServiceType.gateway)) {
+            Map<String, String> ids = new HashMap<>();
+            Collection<Service> svcs = g.getServices();
+            for (Service s: svcs) {
+                DeploymentDetails dd = DeploymentModel.getInstance().getDeploymentDetails(s.getId());
+                ids.put(s.getId(), dd.getRootProperties().getId());
+            }
+            String id = null;
+            for (String k: ids.keySet()) {
+                if (id == null) {
+                    id = ids.get(k);
+                    continue;
+                }
+                if (!id.equals(ids.get(k))) {
+                    showToast(String.format("%s has inconsistent deployments!", g.getName()));
+                    break;
+                }
+                id = ids.get(k);
+            }
+        }
+    }
+
+    @Override
+    protected void showProgress(final boolean show) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {

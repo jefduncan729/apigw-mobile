@@ -11,9 +11,9 @@ import android.widget.TextView;
  */
 public class BasicViewHolder {
 
-    private static final int DEF_TEXT1_ID = android.R.id.text1;
-    private static final int DEF_TEXT2_ID = android.R.id.text2;
-    private static final int DEF_IMAGE_ID = android.R.id.icon;
+    public static final int DEF_TEXT1_ID = android.R.id.text1;
+    public static final int DEF_TEXT2_ID = android.R.id.text2;
+    public static final int DEF_IMAGE_ID = android.R.id.icon;
 
     private TextView txt01;
     private TextView txt02;
@@ -154,5 +154,13 @@ public class BasicViewHolder {
         if (img01 == null)
             return null;
         return img01.getTag();
+    }
+
+    public BasicViewHolder hideImage() {
+        return setImageVisibility(View.GONE);
+    }
+
+    public BasicViewHolder showImage() {
+        return setImageVisibility(View.VISIBLE);
     }
 }

@@ -1,5 +1,6 @@
 package com.axway.apigw.android.activity;
 
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
@@ -8,16 +9,22 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ListView;
 import android.widget.Toolbar;
 
 import com.axway.apigw.android.BaseApp;
 import com.axway.apigw.android.Constants;
 import com.axway.apigw.android.R;
+import com.axway.apigw.android.adapter.ServerInfoListAdapter;
 import com.axway.apigw.android.db.DbHelper;
 import com.axway.apigw.android.event.ActionEvent;
 import com.axway.apigw.android.fragment.HomeFrag;
 import com.axway.apigw.android.model.ServerInfo;
 import com.squareup.otto.Subscribe;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
@@ -25,10 +32,11 @@ import butterknife.ButterKnife;
 /**
  * Created by su on 2/8/2016.
  */
-public class LauncherActivity extends BaseActivity {
+public class LauncherActivity extends BaseActivity  {
     private static final String TAG = LauncherActivity.class.getSimpleName();
 
     private static final int REQ_ADD_SERVER = 1001;
+    private static final int REQ_SETTINGS = 1002;
 
     @Bind(R.id.container01) ViewGroup ctr01;
     @Bind(R.id.toolbar) Toolbar toolbar;
@@ -40,8 +48,6 @@ public class LauncherActivity extends BaseActivity {
         ButterKnife.bind(this);
         toolbar.setTitle(R.string.app_name);
         toolbar.setSubtitle("For Android");
-//        toolbar.setNavigationIcon(R.mipmap.ic_ab_drawer_holo_light);
-//        toolbar.setNavigationOnClickListener(this);
         setActionBar(toolbar);
         int cnt = getServerCount();
         if (cnt == 0) {
@@ -69,7 +75,6 @@ public class LauncherActivity extends BaseActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.action_settings) {
-//            BaseApp.post(new ActionEvent(R.id.action_settings));
             settings();
             return true;
         }
@@ -100,7 +105,7 @@ public class LauncherActivity extends BaseActivity {
                 else {
                     Intent i = new Intent(this, TopologyActivity.class);
                     i.setAction(Intent.ACTION_VIEW);
-                    i.putExtra(Constants.EXTRA_SERVER_INFO, info.toBundle());
+                    BaseApp.getInstance().setCurrentServer(info);
                     startActivity(i);
                 }
                 finish();
@@ -108,6 +113,13 @@ public class LauncherActivity extends BaseActivity {
             else {
                 finish();
             }
+            return;
+        }
+        if (requestCode == REQ_SETTINGS) {
+            if (resultCode == RESULT_OK) {
+                showToast("settings changed");
+            }
+            return;
         }
         super.onActivityResult(requestCode, resultCode, data);
     }
@@ -124,6 +136,11 @@ public class LauncherActivity extends BaseActivity {
     }
 
     private void connect() {
+        if (!BaseApp.getInstance().haveNetwork()) {
+            showToast("Network not available; check Settings");
+            return;
+        }
+        BaseApp.getInstance().setCurrentServer(null);
         ServerInfo info = getOnlyServerInfo();
         if (info == null) {
             pickConnection();
@@ -135,16 +152,54 @@ public class LauncherActivity extends BaseActivity {
 
     private void settings() {
         Log.d(TAG, "show settings");
+        startActivityForResult(new Intent(this, SettingsActivity.class), REQ_SETTINGS);
     }
 
     private void pickConnection() {
-        showToast("not yet implemented");
+        String where = DbHelper.ConnMgrColumns.STATUS + " = ?";  // AND ((" + ConnMgrColumns.USE_SSL + " = ?) OR (" + ConnMgrColumns.USE_SSL + " = ? AND " + ConnMgrColumns.FLAG + " = ?))";
+        String[] whereArgs = new String[] { Integer.toString(Constants.STATUS_ACTIVE) };   //, "0", "1", Integer.toString(Constants.FLAG_CERT_TRUSTED) };
+        Cursor c = getContentResolver().query(DbHelper.ConnMgrColumns.CONTENT_URI, null, where, whereArgs, null);
+        final List<ServerInfo> list = new ArrayList<ServerInfo>();
+        if (c != null) {
+            while (c.moveToNext()) {
+                list.add(ServerInfo.from(c));
+            }
+            c.close();
+        }
+        if (list.size() == 0) {
+            alertDialog("Nothing configured", "Add a connection");
+            return;
+        }
+        customDialog("Select connection", android.R.layout.list_content, false, true, new CustomDialogCallback() {
+            @Override
+            public void populate(final AlertDialog dlg) {
+                ListView listView = (ListView) dlg.findViewById(android.R.id.list);
+                listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                    @Override
+                    public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                        final ServerInfo info = list.get(i);
+                        startConnection(info);
+                        dlg.dismiss();
+                    }
+                });
+                listView.setAdapter(new ServerInfoListAdapter(LauncherActivity.this, list));
+            }
+
+            @Override
+            public void save(AlertDialog dlg) {
+            }
+
+            @Override
+            public boolean validate(AlertDialog dlg) {
+                return true;
+            }
+        });
     }
 
     private void startConnection(ServerInfo info) {
         Intent i = new Intent(this, TopologyActivity.class);
+        BaseApp.getInstance().setCurrentServer(info);
         i.setAction(Intent.ACTION_VIEW);
-        i.putExtra(Constants.EXTRA_SERVER_INFO, info.toBundle());
         startActivity(i);
     }
 
@@ -160,6 +215,9 @@ public class LauncherActivity extends BaseActivity {
                 break;
             case R.id.action_settings:
                 settings();
+                break;
+            case R.id.action_cfg_storage:
+                configureStorage();
                 break;
 
         }
@@ -195,5 +253,10 @@ public class LauncherActivity extends BaseActivity {
     public void onClick(View arg0) {
         Log.d(TAG, String.format("onClick: %d", arg0.getId()));
         super.onClick(arg0);
+    }
+
+    private void configureStorage() {
+        Intent i = new Intent(this, DriveConfigActivity.class);
+        startActivity(i);
     }
 }

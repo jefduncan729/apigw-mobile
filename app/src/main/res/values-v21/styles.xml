@@ -84,18 +84,20 @@
     <!-- list header text -->
     <style name="ListHeaderTextStyle"
         parent="android:Widget.Material.ActionBar.TabText">
-        <!--<item name="android:textColor">@color/frag_title_text</item>-->
         <item name="android:textSize">18sp</item>
         <item name="android:textStyle">bold|italic</item>
-        <!--<item name="android:background">@color/disabled</item>-->
+        <item name="android:textColor">@android:color/primary_text_dark</item>
+        <item name="android:background">@color/axway_blue</item>
     </style>
 
     <!-- title text -->
     <style name="FragmentTitleTextStyle"
         parent="android:Widget.Material.ActionBar.TabText">
-        <!--<item name="android:textColor">@color/frag_title_text</item>-->
+        <item name="android:textColor">@color/axway_blue</item>
         <item name="android:textSize">18sp</item>
         <item name="android:textStyle">bold</item>
+        <item name="android:textAllCaps">true</item>
     </style>
+
     <style name="ProgressBar" parent="android:Widget.Material.Light.ProgressBar.Horizontal"/>
 </resources>

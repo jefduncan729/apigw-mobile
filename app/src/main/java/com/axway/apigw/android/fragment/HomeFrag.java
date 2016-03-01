@@ -19,8 +19,8 @@ import com.axway.apigw.android.view.BasicViewHolder;
  */
 public class HomeFrag extends ListFragment {
 
-    public static final int[] ACTION_IDS = {R.id.action_conn_mgr, R.id.action_connect};
-    public static final int[] DRAWABLE_IDS = {R.mipmap.internet, R.mipmap.server};
+    public static final int[] ACTION_IDS = {R.id.action_conn_mgr, R.id.action_connect, R.id.action_cfg_storage };
+    public static final int[] DRAWABLE_IDS = {R.mipmap.internet, R.mipmap.server, R.mipmap.preferences };
 
     public HomeFrag() {
         super();
@@ -144,6 +144,9 @@ public class HomeFrag extends ListFragment {
             }
             else if (e.actionId == R.id.action_connect) {
                 vh.setText1("Work with Topology").setText2("Work with the topology of a configured Admin Node Manager");
+            }
+            else if (e.actionId == R.id.action_cfg_storage) {
+                vh.setText1("Configure Cloud Storage").setText2("Configure storage folders in your Drive account");
             }
             vh.setImageResource(e.drawableId);
             return view;

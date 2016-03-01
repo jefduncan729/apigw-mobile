@@ -1,5 +1,8 @@
 package com.axway.apigw.android.model;
 
+import com.axway.apigw.android.JsonHelper;
+import com.google.gson.JsonObject;
+
 /**
  * Created by su on 10/27/2014.
  */
@@ -8,6 +11,10 @@ public class DeploymentDetails {
     private String user;
     private Long timestamp;
     private String status;
+    private JsonObject root;
+    private JsonObject policy;
+    private JsonObject env;
+
     private Props rootProps;
     private Props policyProps;
     private Props envProps;
@@ -136,6 +143,52 @@ public class DeploymentDetails {
         return envProps;
     }
 
+    public JsonObject getRoot() {
+        if (root == null) {
+            root = new JsonObject();
+            root.addProperty("Id", "");
+            root.addProperty("Timestamp", 0L);
+        }
+        return root;
+    }
+
+    public JsonObject getPolicy() {
+        if (policy == null) {
+            policy = new JsonObject();
+            _initialize(policy);
+        }
+        return policy;
+    }
+
+    public JsonObject getEnv() {
+        if (env == null) {
+            env = new JsonObject();
+            _initialize(env);
+        }
+        return env;
+    }
+
+    public void setRoot(JsonObject root) {
+        this.root = root;
+    }
+
+    public void setPolicy(JsonObject policy) {
+        this.policy = policy;
+    }
+
+    public void setEnv(JsonObject env) {
+        this.env = env;
+    }
+
+    private void _initialize(JsonObject j) {
+        j.addProperty(JsonHelper.PROP_MANIFEST_VERSION, "");
+        j.addProperty("Id", "");
+        j.addProperty("Timestamp", 0L);
+        j.addProperty("Name", "");
+        j.addProperty("Description", "");
+        j.addProperty("Version", "");
+        j.addProperty("VersionComment", "");
+    }
     public Props createProps() {
         return new Props();
     }

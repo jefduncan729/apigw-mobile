@@ -1,6 +1,7 @@
 package com.axway.apigw.android;
 
 import android.app.Application;
+import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -8,9 +9,13 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.util.SparseArray;
 
+import com.axway.apigw.android.api.ApiClient;
 import com.axway.apigw.android.api.TopologyModel;
 import com.axway.apigw.android.model.ServerInfo;
 import com.squareup.otto.Bus;
@@ -22,6 +27,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.cert.CertPath;
 import java.security.cert.CertPathValidatorException;
+import java.security.cert.Certificate;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
@@ -37,7 +43,7 @@ public class BaseApp extends Application {
     public static final String TAG = BaseApp.class.getSimpleName();
 
     private static final boolean DRAW_RECT = true;
-    private static final int[] BG_COLOR_IDS = {android.R.color.holo_blue_dark, android.R.color.holo_purple, android.R.color.holo_green_dark, android.R.color.holo_red_dark};
+    private static final int[] BG_COLOR_IDS = {R.color.axway_blue, android.R.color.holo_purple, android.R.color.holo_green_dark, android.R.color.holo_red_dark};
 
     private static SSLSocketFactory _socketFactory = null;
     private static KeystoreManager _keystoreManager = null;
@@ -47,10 +53,13 @@ public class BaseApp extends Application {
     private SparseArray<Drawable> _statDrawables;
     private int[] _colors;
     private int colorNdx;
+    private ServerInfo curSrvr;
+    private ApiClient apiClient;
 
     @Override
     public void onCreate() {
         super.onCreate();
+        curSrvr = null;
         _statDrawables = new SparseArray<>();
         Resources res = getResources();
         _statDrawables.put(TopologyModel.GATEWAY_STATUS_RUNNING, res.getDrawable(R.mipmap.thumbs_up, null));
@@ -61,6 +70,12 @@ public class BaseApp extends Application {
         }
         _inst = this;
         colorNdx = 0;
+    }
+
+    @Override
+    public void onTerminate() {
+        Log.d(TAG, "onTerminate");
+        super.onTerminate();
     }
 
     public static SSLSocketFactory sslSocketFactory() {
@@ -112,6 +127,7 @@ public class BaseApp extends Application {
     }
 
     public static void post(Object evt) {
+        Log.d(TAG, String.format("post: %s", evt));
         bus().post(evt);
     }
 
@@ -207,5 +223,58 @@ public class BaseApp extends Application {
 
     public void resetColors() {
         colorNdx = 0;
+    }
+
+    public boolean haveNetwork() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean wo = prefs.getBoolean(Constants.KEY_WIFI_ONLY, true);
+        ConnectivityManager mgr = (ConnectivityManager)getSystemService(CONNECTIVITY_SERVICE);
+        NetworkInfo info = mgr.getActiveNetworkInfo();
+        if (info == null)
+            return false;
+        if (info.isConnected()) {
+            int t = info.getType();
+            return (wo ? t == ConnectivityManager.TYPE_WIFI : (t == ConnectivityManager.TYPE_MOBILE || t == ConnectivityManager.TYPE_WIFI));
+        }
+        return false;
+
+    }
+
+    public boolean isShowMqAdvisories() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        return prefs.getBoolean(Constants.KEY_SHOW_ADVISORIES, false);
+    }
+
+    public boolean isShowInternalKps() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        return prefs.getBoolean(Constants.KEY_SHOW_INTERNAL_KPS, false);
+    }
+
+    public void setCurrentServer(ServerInfo newVal) {
+        apiClient = null;
+        resetSocketFactory();
+        curSrvr = newVal;
+        if (curSrvr != null) {
+            apiClient = ApiClient.from(curSrvr);
+        }
+    }
+
+    public ServerInfo getCurrentServer() {
+        return curSrvr;
+    }
+
+    public ApiClient getApiClient() {
+        if (apiClient == null) {
+            if (curSrvr != null)
+                apiClient = ApiClient.from(curSrvr);
+        }
+        return apiClient;
+    }
+
+    public Certificate[] getCerts(ServerInfo info) {
+        if (info == null)
+            return null;
+        String alias = String.format("%s_%d", info.getHost(), info.getPort());  //info.getHost() + "_" + Integer.toString(info.getPort());
+        return keystoreManager().getCertPath(alias);
     }
 }

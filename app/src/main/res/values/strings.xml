@@ -13,6 +13,7 @@
     <string name="action_add">Add</string>
     <string name="action_edit">Edit</string>
     <string name="action_delete">Delete</string>
+    <string name="action_purge">Purge</string>
     <string name="action_enable">Enable</string>
     <string name="action_disable">Disable</string>
     <string name="action_save">Save</string>
@@ -24,9 +25,14 @@
     <string name="action_start_gateway">Start Gateway</string>
     <string name="action_stop_gateway">Stop Gateway</string>
     <string name="action_gateway_messaging">Messaging</string>
-    <string name="action_gateway_kps">Browse Kps</string>
-    <string name="action_deployment_details">Deployment Details</string>
+    <string name="action_gateway_kps">Browse KPS</string>
+    <string name="action_kps_structure">View Structure</string>
+    <string name="action_kps_customize_list">Customize List Display</string>
+    <string name="action_deployment_details">Manage Deployments</string>
     <string name="action_save_deploy_archive">Save Deployment Archive</string>
+    <string name="action_policy_props">Policy Properties</string>
+    <string name="action_env_props">Environment Properties</string>
+    <string name="action_cfg_storage">Configure Cloud Storage</string>
 
     <string name="welcome">Welcome!</string>
 
@@ -40,6 +46,10 @@
     <string name="warning">Warning</string>
     <string name="touch_to">Touch OK to %1$s \'%2$s\'</string>
 
+    <string name="queues">Queues</string>
+    <string name="topics">Topics</string>
+    <string name="consumers">Consumers</string>
+    <string name="subscribers">Subscribers</string>
 
     <string name="enabled">Enabled</string>
     <string name="port">Port</string>
@@ -59,11 +69,34 @@
     <string name="name">Name</string>
     <string name="mgmt_port">Management Port</string>
     <string name="svcs_port">Services Port</string>
+    <string name="test">Test</string>
+    <string name="tags">Tags</string>
+    <string name="key">Key</string>
+    <string name="value">Value</string>
     <string name="use_ssl">Use SSL?</string>
+    <string name="cert_mgmt_options">Certificate Management Options</string>
+    <string name="use_system_ca">System</string>    <!-- generated CA cert -->
+    <string name="use_user_ca">User</string>    <!--  provided CA cert (P12 required) -->
+    <string name="use_external_ca">External</string> <!--  CA cert (you will get a CSR) -->
+    <string name="domain_phrase">Domain Passphrase</string>
+    <string name="temp_phrase">Temp Passphrase</string>
+    <string name="p12_path">Path to P12 file</string>
+    <string name="p12_phrase">P12 Passphrase</string>
 
     <string name="cert_trusted">Certificate Chain Trusted</string>
     <string name="truststore_removed">Trust Store removed</string>
     <string name="confirm_remove_truststore">Touch OK to remove trusted certificate store</string>
     <string name="truststore_notfound">Trust Store not found</string>
+
+    <string name="general_settings">General</string>
+    <string name="network_settings">Network</string>
+
+    <string-array name="signing_algorithms">
+        <item>sha1</item>
+        <item>sha256</item>
+        <item>sha384</item>
+        <item>sha512</item>
+        <item>md5</item>
+    </string-array>
 
 </resources>

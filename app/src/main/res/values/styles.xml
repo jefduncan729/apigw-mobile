@@ -12,9 +12,9 @@
         <!-- Customize your theme here. -->
 <!--
         <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/axway_blue</item>
         <item name="colorAccent">@color/colorAccent</item>
 -->
-        <item name="colorPrimaryDark">@color/axway_blue</item>
 
         <item name="ic_discard">@mipmap/ic_action_discard_holo_light</item>
         <item name="ic_new">@mipmap/ic_action_new_holo_light</item>
@@ -61,10 +61,8 @@
     <!-- list header text -->
     <style name="ListHeaderTextStyle"
         parent="android:Widget.Holo.ActionBar.TabText">
-        <!--
-                <item name="android:textColor">@color/frag_title_text</item>
-                <item name="android:background">@color/disabled</item>
-        -->
+        <item name="android:textColor">@android:color/primary_text_dark</item>
+        <item name="android:background">@color/axway_blue</item>
         <item name="android:textSize">18sp</item>
         <item name="android:textStyle">bold|italic</item>
     </style>
@@ -72,9 +70,10 @@
     <!-- title text -->
     <style name="FragmentTitleTextStyle"
         parent="android:Widget.Holo.ActionBar.TabText">
-        <!--<item name="android:textColor">@color/frag_title_text</item>-->
+        <item name="android:textColor">@color/axway_blue</item>
         <item name="android:textSize">18sp</item>
         <item name="android:textStyle">bold</item>
+        <item name="android:textAllCaps">true</item>
     </style>
     <style name="ProgressBar" parent="android:Widget.Holo.Light.ProgressBar.Horizontal"/>
 

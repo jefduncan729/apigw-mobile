@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <include layout="@layout/toolbar"/>
+
+    <FrameLayout
+        android:id="@id/container01"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" >
+        <ListView
+            android:id="@android:id/list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            >
+            <!--
+                    <android.support.v4.view.PagerTabStrip
+                        android:id="@id/pager_title_strip"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="top"
+                        android:background="@color/primaryBlue"
+                        android:textColor="#fff"
+                        android:paddingTop="4dp"
+                        android:paddingBottom="4dp" />
+            -->
+
+        </ListView>
+
+        <com.axway.apigw.android.view.FloatingActionButton
+            android:id="@id/fab01"
+            android:layout_width="@dimen/fab_size"
+            android:layout_height="@dimen/fab_size"
+            android:layout_marginEnd="@dimen/fab_size"
+            android:layout_marginBottom="@dimen/fab_size"
+            android:elevation="@dimen/fab_elevation"
+            android:background="@drawable/fab_bg"
+            android:stateListAnimator="@animator/fab_anim"
+            android:layout_gravity="bottom|end">
+
+            <ImageView
+                android:layout_width="@dimen/fab_icon_size"
+                android:layout_height="@dimen/fab_icon_size"
+                android:src="@drawable/fab_icons"
+                android:layout_gravity="center"
+                android:duplicateParentState="true"
+                />
+        </com.axway.apigw.android.view.FloatingActionButton>
+    </FrameLayout>
+    <!-- -->
+    <!--<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"-->
+    <!--android:id="@id/container01"-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="match_parent">-->
+
+    <!--</FrameLayout>-->
+</LinearLayout>

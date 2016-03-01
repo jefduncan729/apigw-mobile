@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
+import android.view.SubMenu;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
@@ -209,7 +210,9 @@ public class TopologyFragment extends Fragment implements View.OnClickListener {
                 menu.add(0, R.id.action_delete, p++, R.string.action_delete).setIntent(iData);  //.setIcon(R.mipmap.ic_action_discard_holo_light);
             }
             menu.add(0, R.id.action_deployment_details, p++, R.string.action_deployment_details).setIntent(iData);
-            menu.add(0, R.id.action_save_deploy_archive, p++, R.string.action_save_deploy_archive).setIntent(iData);
+//            menu.add(0, R.id.action_save_deploy_archive, p++, R.string.action_save_deploy_archive).setIntent(iData);
+            menu.add(0, R.id.action_policy_props, p++, R.string.action_policy_props).setIntent(iData);
+            menu.add(0, R.id.action_env_props, p++, R.string.action_env_props).setIntent(iData);
             menu.setHeaderTitle(svc.getName());
             menu.setHeaderIcon(svh.getImageView().getDrawable());
         }

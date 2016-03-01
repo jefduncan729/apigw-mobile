@@ -1,7 +1,9 @@
 package com.axway.apigw.android.activity;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toolbar;
@@ -10,21 +12,23 @@ import com.axway.apigw.android.BaseApp;
 import com.axway.apigw.android.Constants;
 import com.axway.apigw.android.R;
 import com.axway.apigw.android.ValidationException;
+import com.axway.apigw.android.event.NotifyChangeEvent;
 import com.axway.apigw.android.fragment.EditFrag;
+import com.squareup.otto.Subscribe;
 
 /**
  * Created by su on 2/10/2016.
  */
 abstract public class EditActivity<T> extends BaseActivity {
-
+    private static final String TAG = EditActivity.class.getSimpleName();
     protected T item;
     protected EditFrag<T> editFrag;
 
-    abstract protected EditFrag<T> createFragment(T item);
+    abstract protected EditFrag<T> createFragment(Bundle args, T item);
 
     abstract protected T createItem(Intent intent);
     abstract protected T loadItem(Intent intent);
-    abstract protected boolean saveItem(T item);
+    abstract protected boolean saveItem(T item, Bundle extras);
 
     private Toolbar toolbar;
     protected boolean isInsert;
@@ -33,6 +37,7 @@ abstract public class EditActivity<T> extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.toolbar_pane);
+        setResult(RESULT_CANCELED);
         isInsert = false;
         toolbar = (Toolbar)findViewById(R.id.toolbar);
         if (Intent.ACTION_INSERT.equals(getIntent().getAction())){
@@ -42,11 +47,12 @@ abstract public class EditActivity<T> extends BaseActivity {
         else {
             item = loadItem(getIntent());
         }
+        Bundle args = (savedInstanceState == null ? getIntent().getExtras() : savedInstanceState);
+        editFrag = createFragment(args, item);
         if (toolbar != null) {
             setupToolbar(toolbar);
             setActionBar(toolbar);
         }
-        editFrag = createFragment(item);
         replaceFragment(R.id.container01, editFrag, Constants.TAG_SINGLE_PANE);
     }
 
@@ -87,20 +93,53 @@ abstract public class EditActivity<T> extends BaseActivity {
         BaseApp.bus().unregister(this);
     }
 
+    @Override
+    public void onBackPressed() {
+        if (editFrag != null && editFrag.isDirty()){
+            confirmDialog("Discard changes?", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialogInterface, int i) {
+                    performCancel();
+                }
+            });
+            return;
+        }
+        super.onBackPressed();
+    }
+
     public Toolbar getToolbar() {
         return toolbar;
     }
 
     public void cancel() {
+        if (editFrag.isDirty()) {
+            Log.d(TAG, "ui is dirty");
+            confirmDialog("Discard changes?", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialogInterface, int i) {
+                    performCancel();
+                }
+            });
+        }
+        else {
+            performCancel();
+        }
+    }
+
+    private void performCancel() {
+        Log.d(TAG, "performCancel");
         setResult(RESULT_CANCELED);
         finish();
+
     }
 
     public void save() {
+        Log.d(TAG, "save");
         try {
             editFrag.validate();
-            editFrag.collect(item);
-            if (saveItem(item)) {
+            Bundle extras = new Bundle();
+            editFrag.collect(item, extras);
+            if (saveItem(item, extras)) {
                 setResult(RESULT_OK);
                 finish();
             }
@@ -115,7 +154,7 @@ abstract public class EditActivity<T> extends BaseActivity {
             toolbar.setTitle(getIntent().getStringExtra(Intent.EXTRA_TITLE));
         }
         else {
-            toolbar.setTitle(String.format("%s Connection", (isInsert ? "Add" : "Edit")));
+            toolbar.setTitle(String.format("%s", (isInsert ? "Add" : "Edit")));
         }
     }
 }

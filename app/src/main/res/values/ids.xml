@@ -5,10 +5,18 @@
     <item type="id" name="container03"/>
     <item type="id" name="swipe_refresh"/>
     <item type="id" name="toolbar"/>
+    <item type="id" name="view_pager"/>
+    <item type="id" name="pager_title_strip"/>
+    <item type="id" name="fab01"/>
+    <item type="id" name="spinner01"/>
+    <item type="id" name="spinner02"/>
+    <item type="id" name="spinner03"/>
 
     <item type="id" name="action_add"/>
     <item type="id" name="action_edit"/>
+    <item type="id" name="action_select"/>
     <item type="id" name="action_delete"/>
+    <item type="id" name="action_purge"/>
     <item type="id" name="action_enable"/>
     <item type="id" name="action_disable"/>
     <item type="id" name="action_save"/>
@@ -21,10 +29,15 @@
     <item type="id" name="action_stop_gateway"/>
     <item type="id" name="action_gateway_messaging"/>
     <item type="id" name="action_gateway_kps"/>
+    <item type="id" name="action_kps_structure"/>
+    <item type="id" name="action_kps_customize_list"/>
     <item type="id" name="action_deployment_details"/>
+    <item type="id" name="action_policy_props"/>
+    <item type="id" name="action_env_props"/>
     <item type="id" name="action_save_deploy_archive"/>
     <item type="id" name="action_conn_mgr"/>
     <item type="id" name="action_connect"/>
+    <item type="id" name="action_cfg_storage"/>
 
     <item type="id" name="edit_name"/>
 
@@ -33,6 +46,8 @@
     <item type="id" name="edit_use_ssl"/>
     <item type="id" name="edit_system_ca"/>
     <item type="id" name="edit_user_ca"/>
+    <item type="id" name="ctr_ca_opts"/>
+    <item type="id" name="ctr_ca_group"/>
     <item type="id" name="edit_external_ca"/>
     <item type="id" name="edit_svcs_port"/>
     <item type="id" name="edit_mgmt_port"/>
@@ -41,6 +56,9 @@
     <item type="id" name="edit_passwd"/>
     <item type="id" name="edit_enabled"/>
     <item type="id" name="edit_remember_user"/>
+    <item type="id" name="ctr_svcs_port"/>
+    <item type="id" name="ctr_host"/>
+    <item type="id" name="ctr_group"/>
 
     <item type="id" name="label_name"/>
     <item type="id" name="label_host"/>
@@ -53,5 +71,9 @@
     <item type="id" name="label_passwd"/>
     <item type="id" name="label_key"/>
     <item type="id" name="label_value"/>
+
+    <item type="id" name="text01"/>
+    <item type="id" name="text02"/>
+    <item type="id" name="text03"/>
 
 </resources>

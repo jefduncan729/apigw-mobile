@@ -30,7 +30,9 @@ public class TopologyLoader extends ApiLoader<String, Topology> {
 
     @Override
     protected String consumeBody(Response resp) throws IOException {
-        return resp.body().string();
+        String rv = resp.body().string();
+        resp.body().close();
+        return rv;  //resp.body().string();
     }
 
     @Override

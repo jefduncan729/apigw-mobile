@@ -4,6 +4,7 @@ import android.content.Context;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.axway.apigw.android.BaseApp;
 import com.axway.apigw.android.JsonHelper;
 import com.axway.apigw.android.model.DeploymentDetails;
 import com.axway.apigw.android.model.StatusObserver;
@@ -26,7 +27,7 @@ import okhttp3.Request;
 /**
  * Created by su on 11/9/2015.
  */
-public class TopologyModel {
+public class TopologyModel extends ApiModel {
     private static final String TAG = TopologyModel.class.getSimpleName();
 
     public static final int GATEWAY_STATUS_UNKNOWN = 0;
@@ -42,7 +43,6 @@ public class TopologyModel {
     public static final String INSTANCES_ENDPOINT = TOPOLOGY_ENDPOINT + "/services";
 
     private Topology topology;
-    private ApiClient client;
     private Map<String, Integer> statusCache;
     private Map<String, StatusObserver> statusObservers;
     private Map<String, DeploymentDetails> deployDetails;
@@ -50,6 +50,20 @@ public class TopologyModel {
     private static ArrayList<String> hostNames;
     private static ArrayList<String> grpNames;
     protected static Service adminNodeMgr;
+
+
+    protected TopologyModel() {
+        super();
+        reset();
+    }
+
+    public static TopologyModel getInstance() {
+        if (instance == null) {
+            instance = new TopologyModel();
+        }
+        return instance;
+    }
+/*
     private WeakReference<Context> ctxRef;
 
     public TopologyModel(ApiClient client) {
@@ -83,6 +97,7 @@ public class TopologyModel {
             return;
         ctxRef = new WeakReference<Context>(ctx);
     }
+*/
 
 //    public void loadTopology(JsonObjectHandler handler) {
 //        topoClient.getTopology(handler);
@@ -320,6 +335,29 @@ public class TopologyModel {
         assert client != null;
         Group g = getInstanceGroup(instId);
         Request req = client.createRequest(String.format("%s/%s/%s?deleteDiskInstance=%s", INSTANCES_ENDPOINT, g.getId(), instId, deleteDisk), "DELETE", null);
+        client.executeAsyncRequest(req, cb);
+        return req;
+    }
+
+    public Request addGroup(Group g, Callback cb) {
+        assert client != null;
+        JsonObject json = JsonHelper.getInstance().toJson(g);
+        assert json != null;
+        if (json.has("id"))
+            json.remove("id");
+        Request req = client.createRequest(GROUPS_ENDPOINT, "POST", json);
+        client.executeAsyncRequest(req, cb);
+        return req;
+    }
+
+    public Request removeGroup(Group grp, Callback cb) {
+        return removeGroup(grp, true, cb);
+    }
+
+    public Request removeGroup(Group grp, boolean deleteDisk, Callback cb) {
+        assert client != null;
+        assert grp != null;
+        Request req = client.createRequest(String.format("%s/%s?deleteDiskGroup=%s", GROUPS_ENDPOINT, grp.getId(), deleteDisk), "DELETE", null);
         client.executeAsyncRequest(req, cb);
         return req;
     }

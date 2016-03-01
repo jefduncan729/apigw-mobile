@@ -22,6 +22,12 @@ import android.widget.Toast;
 import com.axway.apigw.android.Constants;
 import com.axway.apigw.android.R;
 
+import java.io.IOException;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.Response;
+
 public class BaseActivity extends AppCompatActivity implements OnClickListener {
 	private static final String TAG = BaseActivity.class.getSimpleName();
 	
@@ -242,14 +248,25 @@ public class BaseActivity extends AppCompatActivity implements OnClickListener {
         dlg.show();
 	}
 
-    protected void customDialog(String title, int layoutId, final CustomDialogCallback callback) {
+    public void customDialog(String title, int layoutId, final CustomDialogCallback callback) {
+        customDialog(title, layoutId, true, true, callback);
+
+    }
+
+    protected void customDialog(String title, int layoutId, boolean showOk, final CustomDialogCallback callback) {
+        customDialog(title, layoutId, showOk, true, callback);
+
+    }
+    protected void customDialog(String title, int layoutId, boolean showOk, boolean showCancel, final CustomDialogCallback callback) {
         AlertDialog.Builder bldr = new AlertDialog.Builder(this);
         bldr.setView(layoutId)
                 .setTitle(title)
                 .setIcon(R.mipmap.ic_action_about_holo_light)
                 .setCancelable(true);
-        bldr.setPositiveButton(android.R.string.yes, Constants.NOOP_LISTENER);
-        bldr.setNegativeButton(android.R.string.no, Constants.NOOP_LISTENER);
+        if (showOk)
+            bldr.setPositiveButton(android.R.string.yes, Constants.NOOP_LISTENER);
+        if (showCancel)
+            bldr.setNegativeButton(android.R.string.no, Constants.NOOP_LISTENER);
         final AlertDialog dlg = bldr.create();
 
         dlg.setOnShowListener(new DialogInterface.OnShowListener() {
@@ -421,6 +438,10 @@ public class BaseActivity extends AppCompatActivity implements OnClickListener {
         });
     }
 
+    protected void showProgress(boolean show) {
+
+    }
+
     protected void finishWithAlert(String msg) {
         Log.v(TAG, "finishWithAlert: " + msg);
         alertDialog(msg, new DialogInterface.OnClickListener() {
@@ -496,5 +517,34 @@ public class BaseActivity extends AppCompatActivity implements OnClickListener {
                 Toast.makeText(BaseActivity.this, msg, duration).show();
             }
         });
+    }
+
+    protected abstract class BaseCallback implements Callback {
+        @Override
+        public void onFailure(Call call, IOException e) {
+            showProgress(false);
+            Log.e(TAG, String.format("call failed: %s", call), e);
+            showToast(String.format("%s", e.getMessage()));
+        }
+
+        @Override
+        public void onResponse(final Call call, final Response response) throws IOException {
+            if (response.isSuccessful()) {
+                showProgress(false);
+                final String body = response.body().string();
+                response.body().close();
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        onSuccessResponse(response.code(), response.message(), body);
+                    }
+                });
+            }
+            else {
+                onFailure(call, new IOException(String.format("%d %s", response.code(), (response.message()))));
+            }
+        }
+
+        abstract protected void onSuccessResponse(int code, String msg, String body);
     }
 }

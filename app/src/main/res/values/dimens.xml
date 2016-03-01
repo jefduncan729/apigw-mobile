@@ -66,4 +66,5 @@
 
     <dimen name="gtw_status_icon_size">48dp</dimen>
     <dimen name="gtw_status_icon_stroke">1dp</dimen>
+
 </resources>
