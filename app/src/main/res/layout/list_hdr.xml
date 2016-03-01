@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:paddingLeft="@dimen/listitem_medium_margin"
+    android:paddingStart="@dimen/listitem_medium_margin"
+    android:paddingRight="@dimen/listitem_medium_margin"
+    android:paddingEnd="@dimen/listitem_medium_margin"
+    android:layout_height="wrap_content"
+    android:background="@color/axway_blue"
+    >
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical|center_horizontal"
+        android:paddingTop="@dimen/listitem_medium_margin"
+        android:paddingBottom="@dimen/listitem_medium_margin"
+        android:id="@android:id/text1"
+        android:text="@string/app_name"
+        android:textAppearance="@style/ListHeaderTextStyle"
+    />
+<!--
+    android:background="@color/primary_2"
+        android:textColor="@android:color/white"
+        android:textAllCaps="false"
+-->
+</FrameLayout>
