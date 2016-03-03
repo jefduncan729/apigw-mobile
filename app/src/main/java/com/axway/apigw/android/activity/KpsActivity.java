@@ -94,7 +94,7 @@ import butterknife.ButterKnife;
 
     @Override
     public Loader<Kps> onCreateLoader(int i, Bundle bundle) {
-        return new KpsStoresLoader(this, BaseApp.getInstance().getApiClient(), instId);
+        return new KpsStoresLoader(this, app.getApiClient(), instId);
     }
 
     @Override

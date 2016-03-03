@@ -19,8 +19,10 @@ import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import com.axway.apigw.android.BaseApp;
 import com.axway.apigw.android.Constants;
 import com.axway.apigw.android.R;
+import com.axway.apigw.android.fragment.ProgressFragment;
 
 import java.io.IOException;
 
@@ -51,7 +53,9 @@ public class BaseActivity extends AppCompatActivity implements OnClickListener {
     private ProgressBar progressBar;
 
     private boolean fromSavedState;
+    protected BaseApp app;
 
+/*
 	public BaseActivity() {
 		super();
 		prefs = null;
@@ -59,6 +63,7 @@ public class BaseActivity extends AppCompatActivity implements OnClickListener {
         handler = null;
 //        safeExtras = null;
 	}
+*/
 
 //    protected int getLayoutId() {
 //        return R.layout.single_pane;
@@ -67,6 +72,7 @@ public class BaseActivity extends AppCompatActivity implements OnClickListener {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        app = BaseApp.getInstance();
         fromSavedState = (savedInstanceState != null);
         if (!fromSavedState) {
 //            if (getIntent() != null) {
@@ -409,6 +415,8 @@ public class BaseActivity extends AppCompatActivity implements OnClickListener {
 
     protected void showProgressFrag(String msg, int ctrId) {
         showProgressBar(true);
+        ProgressFragment frag = ProgressFragment.newInstance(msg);
+        replaceFragment(ctrId, frag, Constants.TAG_PROGRESS);
 //        LoadingFragment progFrag = LoadingFragment.newInstance(msg);
 //        if (!isMultiPane())
 //            ctrId = R.id.container01;

@@ -3,22 +3,24 @@ package com.axway.apigw.android.fragment;
 import android.app.Fragment;
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.format.DateUtils;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
-import android.view.SubMenu;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.axway.apigw.android.BaseApp;
 import com.axway.apigw.android.Constants;
-import com.axway.apigw.android.JsonHelper;
 import com.axway.apigw.android.R;
+import com.axway.apigw.android.api.DeploymentModel;
 import com.axway.apigw.android.api.TopologyModel;
 import com.axway.apigw.android.event.ActionEvent;
 import com.axway.apigw.android.event.ClickEvent;
 import com.axway.apigw.android.event.RefreshEvent;
+import com.axway.apigw.android.model.DeploymentDetails;
 import com.axway.apigw.android.view.BasicViewHolder;
 import com.axway.apigw.android.view.ServiceViewHolder;
 import com.vordel.api.topology.model.Group;
@@ -39,16 +41,21 @@ import butterknife.ButterKnife;
 public class TopologyFragment extends Fragment implements View.OnClickListener {
     private static final String TAG = TopologyFragment.class.getSimpleName();
 
-    private TopologyModel model;
+    private TopologyModel topoModel;
+    private DeploymentModel deployModel;
+    private BaseApp app;
+
     @Bind(R.id.container01) ViewGroup parentView;
 
-    public static TopologyFragment newInstance(TopologyModel model) {
-        return newInstance(model, null);
+    public static TopologyFragment newInstance() {
+        return newInstance(null);
     }
 
-    public static TopologyFragment newInstance(TopologyModel model, Bundle args) {
+    public static TopologyFragment newInstance(Bundle args) {
         TopologyFragment rv = new TopologyFragment();
-        rv.model = model;
+        rv.app = BaseApp.getInstance();
+        rv.topoModel = TopologyModel.getInstance();
+        rv.deployModel = DeploymentModel.getInstance();
         if (args != null)
             rv.setArguments(args);
         return rv;
@@ -59,12 +66,12 @@ public class TopologyFragment extends Fragment implements View.OnClickListener {
         View rv = inflater.inflate(R.layout.single_pane, null);
         ButterKnife.bind(this, rv);
         parentView.removeAllViews();
-        BaseApp.getInstance().resetColors();
-        if (model == null) {
+        app.resetColors();
+        if (topoModel == null) {
             BaseApp.post(new RefreshEvent(this));
             return rv;
         }
-        Topology t = model.getTopology();
+        Topology t = topoModel.getTopology();
         if (t == null) {
             return rv;
         }
@@ -74,7 +81,7 @@ public class TopologyFragment extends Fragment implements View.OnClickListener {
         Collection<Service> svcs = t.getServices(Topology.ServiceType.gateway);
         List<Group> grps = new ArrayList<>();
         for (Service s: svcs) {
-            Group g = model.getInstanceGroup(s.getId());
+            Group g = topoModel.getInstanceGroup(s.getId());
             if (!grps.contains(g))
                 grps.add(g);
         }
@@ -120,26 +127,38 @@ public class TopologyFragment extends Fragment implements View.OnClickListener {
 
     private void buildInfoCard(Topology t, ViewGroup v, LayoutInflater inflater) {
         TextView ttl = (TextView)v.findViewById(android.R.id.title);
+        ImageView img = (ImageView)v.findViewById(android.R.id.icon);
+//        img.setImageResource(R.mipmap.server);
         ViewGroup ctr = (ViewGroup)v.findViewById(R.id.container03);
         ttl.setText("Details");
         ctr.addView(newLabelText(inflater, "Id", t.getId()));
         ctr.addView(newLabelText(inflater, "Product Version", t.getProductVersion()));
         ctr.addView(newLabelText(inflater, "Topology Version", Integer.toString(t.getVersion())));
-        ctr.addView(newLabelText(inflater, "Last Updated", JsonHelper.getInstance().formatDatetime(t.getTimestamp())));
+        ctr.addView(newLabelText(inflater, "Last Updated", app.relativeTime(t.getTimestamp())));    //DateUtil.relativeTime(t.getTimestamp()
+        DateUtils.getRelativeTimeSpanString(t.getTimestamp());
         int nh = t.getHosts().size();
-        int ng = model.getGroupNames().size();
+        int ng = topoModel.getGroupNames().size();
         int ni = t.getServiceIds(Topology.ServiceType.gateway).size();
         ctr.addView(newSimpleText(inflater, String.format("%d host%s, %d group%s, %d instance%s", nh, plural(nh), ng, plural(ng), ni, plural(ni))));
     }
 
     private void buildGroupCard(Topology t, Group grp, ViewGroup v, LayoutInflater inflater) {
         TextView ttl = (TextView)v.findViewById(android.R.id.title);
+        ImageView img = (ImageView)v.findViewById(android.R.id.icon);
         ViewGroup ctr = (ViewGroup)v.findViewById(R.id.container03);
+        img.setImageResource(R.mipmap.ic_action_good_holo_light);
+        if (deployModel.isInconsistentGroup(grp.getId())) {
+            img.setImageResource(R.mipmap.ic_action_warning_holo_light);
+        }
+        img.setVisibility(View.VISIBLE);
         ttl.setText(String.format("%s (%s)", grp.getName(), grp.getId()));
         ttl.setTag(grp);
+        ttl.setOnClickListener(this);
         registerForContextMenu(ttl);
         Collection<Service> svcs = grp.getServicesByType(Topology.ServiceType.gateway);
         for (Service svc: svcs) {
+            if (ctr.getChildCount() > 0)
+                ctr.addView(newDivider(inflater));
             ctr.addView(newServiceView(inflater, grp, svc));
         }
         ctr.addView(newDivider(inflater));
@@ -154,15 +173,20 @@ public class TopologyFragment extends Fragment implements View.OnClickListener {
     private View newServiceView(LayoutInflater inflater, Group grp, Service svc) {
         View rv = inflater.inflate(R.layout.svc_item, null);
         ServiceViewHolder h = new ServiceViewHolder(rv);
-        Host host = model.getHostById(svc.getHostID());
+        Host host = topoModel.getHostById(svc.getHostID());
         rv.setTag(h);
+        String txt2 = String.format("host: %s\nMgmt port: %d, %s", host.getName(), svc.getManagementPort(), svc.getEnabled() ? "enabled" : "disabled");
+        DeploymentDetails dd = deployModel.getDeploymentDetails(svc.getId());
+        if (dd != null) {
+            txt2 = String.format("%s\nDeployed %s (%s)", txt2, app.relativeTime(dd.getTimestamp()), dd.getUser());
+        }
         h.setData(svc)
             .setText1(String.format("%s (%s)", svc.getName(), svc.getId()))
-            .setText2(String.format("host: %s\nMgmt port: %d, %s", host.getName(), svc.getManagementPort(), svc.getEnabled() ? "enabled" : "disabled"))
-                .setImageBitmap(BaseApp.getInstance().drawBitmapForState(Topology.EntityType.Gateway, svc.getName()));
+            .setText2(txt2)
+            .setImageBitmap(app.drawBitmapForState(Topology.EntityType.Gateway, svc.getName()));
         h.setStatus(TopologyModel.GATEWAY_STATUS_CHECKING)
             .setStatClickListener(svc.getId(), this);
-        model.registerStatusObserver(svc.getId(), h);
+        topoModel.registerStatusObserver(svc.getId(), h);
         registerForContextMenu(rv);
         rv.setOnClickListener(this);
         return rv;
@@ -189,7 +213,7 @@ public class TopologyFragment extends Fragment implements View.OnClickListener {
             Intent iData = new Intent();
             iData.putExtra(Constants.EXTRA_GROUP_ID, g.getId());
             menu.add(0, R.id.action_edit, p++, R.string.action_edit).setIntent(iData);  //.setIcon(R.mipmap.ic_action_discard_holo_light);
-            menu.add(0, R.id.action_delete, p++, R.string.action_delete).setIntent(iData);  //.setIcon(R.mipmap.ic_action_discard_holo_light);
+//            menu.add(0, R.id.action_delete, p++, R.string.action_delete).setIntent(iData);  //.setIcon(R.mipmap.ic_action_discard_holo_light);
             menu.setHeaderTitle(g.getName());
             return;
         }
@@ -209,10 +233,9 @@ public class TopologyFragment extends Fragment implements View.OnClickListener {
                 menu.add(0, R.id.action_start_gateway, p++, R.string.action_start_gateway).setIntent(iData);
                 menu.add(0, R.id.action_delete, p++, R.string.action_delete).setIntent(iData);  //.setIcon(R.mipmap.ic_action_discard_holo_light);
             }
-            menu.add(0, R.id.action_deployment_details, p++, R.string.action_deployment_details).setIntent(iData);
-//            menu.add(0, R.id.action_save_deploy_archive, p++, R.string.action_save_deploy_archive).setIntent(iData);
-            menu.add(0, R.id.action_policy_props, p++, R.string.action_policy_props).setIntent(iData);
-            menu.add(0, R.id.action_env_props, p++, R.string.action_env_props).setIntent(iData);
+            menu.add(0, R.id.action_deployment_details, p, R.string.action_deployment_details).setIntent(iData);
+//            menu.add(0, R.id.action_policy_props, p++, R.string.action_policy_props).setIntent(iData);
+//            menu.add(0, R.id.action_env_props, p++, R.string.action_env_props).setIntent(iData);
             menu.setHeaderTitle(svc.getName());
             menu.setHeaderIcon(svh.getImageView().getDrawable());
         }

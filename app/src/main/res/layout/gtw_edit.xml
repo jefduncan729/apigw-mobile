@@ -5,6 +5,28 @@
     android:paddingEnd="@dimen/activity_vertical_margin"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
+<!--
+
+    <LinearLayout
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:paddingTop="@dimen/activity_horizontal_margin_small"
+        android:paddingBottom="@dimen/activity_horizontal_margin_small"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:id="@android:id/icon1"
+            android:layout_width="@dimen/gtw_status_icon_size"
+            android:layout_height="@dimen/gtw_status_icon_size"
+            android:layout_margin="@dimen/listitem_small_margin"
+            android:paddingTop="@dimen/activity_horizontal_margin_small"
+            android:contentDescription="@string/app_name"
+            android:src="@mipmap/thumbs_up"
+            android:layout_gravity="end"
+            />
+        </LinearLayout>
+    -->
 
     <LinearLayout
         android:layout_height="wrap_content"

@@ -219,7 +219,7 @@ public class MessagingActivity extends BaseActivity implements ViewPager.OnPageC
     private void performDestAction(int action, String kind, String name) {
         if (!kind.endsWith("s"))
             kind = kind + "s";
-        ApiClient client = BaseApp.getInstance().getApiClient();
+        ApiClient client = app.getApiClient();
         if (action == R.id.action_add) {
             String url = String.format("%s/%s", MessagingModel.ENDPOINT_MQ_DESTS.replace("{svcId}", instId).replace("{destType}", kind.toLowerCase()), name);
             Request req = client.createRequest(url, "PUT", null);

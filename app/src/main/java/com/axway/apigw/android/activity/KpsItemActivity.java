@@ -81,7 +81,7 @@ public class KpsItemActivity extends EditActivity<JsonObject> {
                 keyVal = item.get(key).getAsString();
             endpoint = String.format("%s/%s", endpoint, keyVal);
         }
-        ApiClient client = BaseApp.getInstance().getApiClient();
+        ApiClient client = app.getApiClient();
         Request req = client.createRequest(endpoint, method, item);
         client.executeAsyncRequest(req, new UpdateCallback());
         return true;

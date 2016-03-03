@@ -82,6 +82,9 @@
 
         <activity android:name=".activity.ManagePropsActivity" android:label="@string/action_gateway_kps">
         </activity>
+
+        <service android:name=".service.TestIntentService" android:label="@string/app_name"/>
+        <service android:name=".service.DriveService" android:label="@string/app_name"/>
     </application>
 
 </manifest>

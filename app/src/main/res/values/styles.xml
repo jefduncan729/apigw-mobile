@@ -6,6 +6,8 @@
     <attr name="ic_settings" format="reference"/>
     <attr name="ic_save" format="reference"/>
     <attr name="ic_cancel" format="reference"/>
+    <attr name="ic_cloud" format="reference"/>
+    <attr name="ic_upload" format="reference"/>
 
     <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
@@ -23,6 +25,8 @@
         <item name="ic_settings">@mipmap/ic_action_settings_holo_light</item>
         <item name="ic_save">@mipmap/ic_action_done_holo_light</item>
         <item name="ic_cancel">@mipmap/ic_action_cancel_holo_light</item>
+        <item name="ic_cloud">@mipmap/ic_action_cloud_holo_light</item>
+        <item name="ic_upload">@mipmap/ic_action_upload_holo_light</item>
     </style>
 
     <style name="SmallText"
@@ -76,6 +80,7 @@
         <item name="android:textAllCaps">true</item>
     </style>
     <style name="ProgressBar" parent="android:Widget.Holo.Light.ProgressBar.Horizontal"/>
+    <style name="CircularProgressBar" parent="android:Widget.Holo.Light.ProgressBar"/>
 
     <style name="Widget"/>
     <style name="Widget.SampleDashboard.Card" parent="Widget">

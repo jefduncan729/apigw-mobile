@@ -8,6 +8,7 @@
     <item type="id" name="view_pager"/>
     <item type="id" name="pager_title_strip"/>
     <item type="id" name="fab01"/>
+    <item type="id" name="fab_img"/>
     <item type="id" name="spinner01"/>
     <item type="id" name="spinner02"/>
     <item type="id" name="spinner03"/>
@@ -35,9 +36,13 @@
     <item type="id" name="action_policy_props"/>
     <item type="id" name="action_env_props"/>
     <item type="id" name="action_save_deploy_archive"/>
+    <item type="id" name="action_save_env_archive"/>
+    <item type="id" name="action_save_policy_archive"/>
+    <item type="id" name="action_save_env_settings"/>
     <item type="id" name="action_conn_mgr"/>
     <item type="id" name="action_connect"/>
     <item type="id" name="action_cfg_storage"/>
+    <item type="id" name="action_upload"/>
 
     <item type="id" name="edit_name"/>
 

@@ -112,7 +112,7 @@ abstract public class EditActivity<T> extends BaseActivity {
     }
 
     public void cancel() {
-        if (editFrag.isDirty()) {
+        if (editFrag != null && editFrag.isDirty()) {
             Log.d(TAG, "ui is dirty");
             confirmDialog("Discard changes?", new DialogInterface.OnClickListener() {
                 @Override
@@ -120,10 +120,9 @@ abstract public class EditActivity<T> extends BaseActivity {
                     performCancel();
                 }
             });
+            return;
         }
-        else {
-            performCancel();
-        }
+        performCancel();
     }
 
     private void performCancel() {

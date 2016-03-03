@@ -2,9 +2,12 @@ package com.axway.apigw.android.fragment;
 
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v4.view.ViewCompat;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
+import android.transition.Transition;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,20 +15,19 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.Spinner;
 
+import com.axway.apigw.android.BaseApp;
 import com.axway.apigw.android.Constants;
 import com.axway.apigw.android.R;
 import com.axway.apigw.android.RequiredFieldException;
 import com.axway.apigw.android.ValidationException;
 import com.axway.apigw.android.api.TopologyModel;
-import com.axway.apigw.android.model.ServerInfo;
 import com.axway.apigw.android.util.Utilities;
-import com.axway.apigw.android.view.ServiceViewHolder;
 import com.vordel.api.topology.model.Group;
-import com.vordel.api.topology.model.Host;
 import com.vordel.api.topology.model.Service;
 
 import java.util.List;
@@ -34,6 +36,8 @@ import java.util.List;
  * Created by su on 2/23/2016.
  */
 public class EditServiceFragment extends EditFrag<Service> implements TextWatcher, View.OnClickListener, AdapterView.OnItemSelectedListener {
+
+    private static final String TAG = EditServiceFragment.class.getSimpleName();
 
     private EditText edName;
     private EditText edSvcPort;
@@ -49,10 +53,11 @@ public class EditServiceFragment extends EditFrag<Service> implements TextWatche
     private ViewGroup ctrSvcPort;
     private ViewGroup ctrHost;
     private ViewGroup ctrGroup;
+    private ImageView statImg;
     private boolean adding;
     private Group grp;
     private int signAlgNdx;
-    private TopologyModel model = TopologyModel.getInstance();
+    private TopologyModel topoModel = TopologyModel.getInstance();
 
     public static EditServiceFragment newInstance(Group grp, Service svc) {
         EditServiceFragment rv = new EditServiceFragment();
@@ -66,6 +71,8 @@ public class EditServiceFragment extends EditFrag<Service> implements TextWatche
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rv = inflater.inflate(R.layout.gtw_edit, null);
         edName = (EditText)rv.findViewById(R.id.edit_name);
+        statImg = (ImageView)rv.findViewById(android.R.id.icon1);
+//        TextView lbl = (TextView)rv.findViewById(R.id.label_name);
         edSvcPort = (EditText)rv.findViewById(R.id.edit_svcs_port);
         edMgmtPort = (EditText)rv.findViewById(R.id.edit_mgmt_port);
         edHost = (AutoCompleteTextView)rv.findViewById(R.id.edit_host);
@@ -84,10 +91,12 @@ public class EditServiceFragment extends EditFrag<Service> implements TextWatche
         if (item.getManagementPort() > 0)
             edMgmtPort.setText(String.format("%d", item.getManagementPort()));
         if (adding) {
+            if (statImg != null)
+                statImg.setVisibility(View.GONE);
             edUserCa.setChecked(false);
             edExtCa.setChecked(false);
             edSysCa.setChecked(true);
-            List<String> hosts = model.getHostNames();
+            List<String> hosts = topoModel.getHostNames();
             String hnm = hosts.get(0);
             edHost.setEnabled(false);
             if (hosts.size() > 1) {
@@ -97,7 +106,7 @@ public class EditServiceFragment extends EditFrag<Service> implements TextWatche
                 edHost.setEnabled(true);
             }
             edHost.setText(hnm);
-            List<String> grps = model.getGroupNames();
+            List<String> grps = topoModel.getGroupNames();
             String gnm = (grp == null ? grps.get(0) : grp.getName());
             edGroup.setEnabled(true);
             if (grps.size() > 1) {
@@ -116,6 +125,10 @@ public class EditServiceFragment extends EditFrag<Service> implements TextWatche
             show(caOpts, true);
         }
         else {
+            if (statImg != null) {
+                statImg.setImageDrawable(BaseApp.getInstance().statusDrawable(topoModel.getCachedStatus(item.getId())));
+                ViewCompat.setTransitionName(statImg, "img1");
+            }
             show(ctrSvcPort, false);
             show(ctrHost, false);
             show(ctrGroup, false);
@@ -145,6 +158,55 @@ public class EditServiceFragment extends EditFrag<Service> implements TextWatche
             edExtCa.setOnClickListener(this);
             edAlg.setOnItemSelectedListener(this);
         }
+        addTransitionListener();
+    }
+
+    private boolean addTransitionListener() {
+        final Transition transition = getActivity().getWindow().getSharedElementEnterTransition();
+
+        if (transition != null) {
+            // There is an entering shared element transition so add a listener to it
+            transition.addListener(new Transition.TransitionListener() {
+                @Override
+                public void onTransitionEnd(Transition transition) {
+                    Log.d(TAG, "onTransitionEnd");
+                    // As the transition has ended, we can now load the full-size image
+//                    loadFullSizeImage();
+
+                    // Make sure we remove ourselves as a listener
+                    transition.removeListener(this);
+                }
+
+                @Override
+                public void onTransitionStart(Transition transition) {
+                    Log.d(TAG, "onTransitionStart");
+                    // No-op
+                }
+
+                @Override
+                public void onTransitionCancel(Transition transition) {
+                    Log.d(TAG, "onTransitionCancel");
+                    // Make sure we remove ourselves as a listener
+                    transition.removeListener(this);
+                }
+
+                @Override
+                public void onTransitionPause(Transition transition) {
+                    Log.d(TAG, "onTransitionPause");
+                    // No-op
+                }
+
+                @Override
+                public void onTransitionResume(Transition transition) {
+                    Log.d(TAG, "onTransitionResume");
+                    // No-op
+                }
+            });
+            return true;
+        }
+
+        // If we reach here then we have not added a listener
+        return false;
     }
 
     @Override

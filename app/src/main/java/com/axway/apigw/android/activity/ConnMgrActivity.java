@@ -227,7 +227,7 @@ public class ConnMgrActivity extends BaseActivity {
             Log.e(TAG, "no server info found: " + uri.toString());
             return;
         }
-        Certificate[] certs = BaseApp.getInstance().getCerts(info);
+        Certificate[] certs = app.getCerts(info);
         if (certs == null)
             return;
         StringBuilder sb = new StringBuilder();

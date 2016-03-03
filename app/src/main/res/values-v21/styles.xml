@@ -100,4 +100,5 @@
     </style>
 
     <style name="ProgressBar" parent="android:Widget.Material.Light.ProgressBar.Horizontal"/>
+    <style name="CircularProgressBar" parent="android:Widget.Material.Light.ProgressBar"/>
 </resources>

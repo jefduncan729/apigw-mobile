@@ -1,5 +1,6 @@
 package com.axway.apigw.android.activity;
 
+import android.app.ActivityOptions;
 import android.app.LoaderManager;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -7,7 +8,6 @@ import android.content.Loader;
 import android.os.Bundle;
 import android.os.Message;
 import android.support.v4.widget.SwipeRefreshLayout;
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,6 +28,7 @@ import com.axway.apigw.android.fragment.EmptyFragment;
 import com.axway.apigw.android.fragment.TopologyFragment;
 import com.axway.apigw.android.model.DeploymentDetails;
 import com.axway.apigw.android.model.ServerInfo;
+import com.axway.apigw.android.service.TestIntentService;
 import com.axway.apigw.android.view.ServiceViewHolder;
 import com.google.gson.JsonObject;
 import com.squareup.otto.Subscribe;
@@ -35,20 +36,15 @@ import com.vordel.api.topology.model.Group;
 import com.vordel.api.topology.model.Service;
 import com.vordel.api.topology.model.Topology;
 
-import java.io.IOException;
 import java.security.cert.CertPath;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
-import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Request;
-import okhttp3.Response;
 
 /**
  * Created by su on 1/22/2016.
@@ -70,7 +66,8 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
     @Bind(R.id.container01) ViewGroup ctr01;
     @Bind(R.id.toolbar) Toolbar toolbar;
 
-    private TopologyModel model;
+    private TopologyModel topoModel;
+    private DeploymentModel deployModel;
     private Group orphanedGroup;
 
     @Override
@@ -104,8 +101,9 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
             }
         });
         showProgress(true);
-        ServerInfo server = BaseApp.getInstance().getCurrentServer();
-        model = TopologyModel.getInstance();    //new TopologyModel(BaseApp.getInstance().getApiClient());
+        ServerInfo server = app.getCurrentServer();
+        topoModel = TopologyModel.getInstance();    //new TopologyModel(app.getApiClient());
+        deployModel = DeploymentModel.getInstance();
         toolbar.setTitle("Topology");
         toolbar.setSubtitle(server.displayString());
         getLoaderManager().initLoader(TOPO_LOADER, null, this);
@@ -149,7 +147,7 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
             if (t == null || !(t instanceof String))
                 return;
             String instId = (String)t;
-            int stat = model.getCachedStatus(instId);
+            int stat = topoModel.getCachedStatus(instId);
             if (stat == TopologyModel.GATEWAY_STATUS_RUNNING)
                 confirmStartGateway(instId, false);
             else if (stat == TopologyModel.GATEWAY_STATUS_NOT_RUNNING)
@@ -160,7 +158,13 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
             if (t instanceof ServiceViewHolder) {
                 ServiceViewHolder svh = (ServiceViewHolder)t;
                 Service svc = (Service)svh.getData();
-                editService(svc);
+                Bundle opts = ActivityOptions.makeSceneTransitionAnimation(this, svh.getStatusImage(), "img1").toBundle();
+//                Bundle opts = ActivityOptions.makeSceneTransitionAnimation(this, new Pair<>(v, "text1"));
+                editService(svc, opts);
+                return;
+            }
+            if (t instanceof Group) {
+                Log.d(TAG, String.format("%s touched", ((Group)t).getId()));
                 return;
             }
             if (t instanceof String) {
@@ -189,13 +193,16 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
         BaseApp.resetSocketFactory();
     }
 
-    private void editService(Service svc) {
+    private void editService(Service svc, Bundle opts) {
         Intent i = new Intent(this, EditServiceActivity.class);
         i.setAction(Intent.ACTION_EDIT);
-        Group g = model.getInstanceGroup(svc.getId());
+        Group g = topoModel.getInstanceGroup(svc.getId());
         i.putExtra(Constants.EXTRA_JSON_ITEM, JsonHelper.getInstance().toJson(svc).toString());
         i.putExtra(Constants.EXTRA_GROUP_ID, g.getId());
-        startActivityForResult(i, REQ_EDIT_SVC);
+        if (opts == null)
+            startActivityForResult(i, REQ_EDIT_SVC);
+        else
+            startActivityForResult(i, REQ_EDIT_SVC, opts);
     }
 
     private void addService(String grpId) {
@@ -262,7 +269,7 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
 
     @Subscribe
     public void onActionEvent(ActionEvent evt) {
-        String msg = null;
+//        String msg = null;
         String instId = (evt.data == null ? "" : evt.data.getStringExtra(Constants.EXTRA_INSTANCE_ID));
         switch (evt.id) {
             case R.id.action_delete:
@@ -283,18 +290,58 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
             case R.id.action_deployment_details:
                 requestDeployDetails(instId);
                 break;
+/*
             case R.id.action_save_deploy_archive:
-                msg = "save deployment archive";
+            case R.id.action_save_policy_archive:
+            case R.id.action_save_env_archive:
+            case R.id.action_save_env_settings:
+                uploadActivity(evt.id, instId, evt.data);
                 break;
+*/
             case R.id.action_policy_props:
             case R.id.action_env_props:
-                manageProperties(instId, evt.id);
+//                manageProperties(instId, evt.id);
+                Intent i = new Intent(this, TestIntentService.class);
+                startService(i);
                 break;
         }
-        if (!TextUtils.isEmpty(msg)) {
-            showToast(String.format("%s: %s", msg, instId));
-        }
+//        if (!TextUtils.isEmpty(msg)) {
+//            showToast(String.format("%s: %s", msg, instId));
+//        }
     }
+/*
+
+    private void uploadActivity(int action, String instId, Intent intent) {
+        Intent i = new Intent(this, DriveUploadActivity.class);
+        DeploymentDetails dd = deployModel.getDeploymentDetails(instId);
+        String archId = dd.getId();
+        long ts = System.currentTimeMillis();
+        i.putExtra(Constants.EXTRA_ACTION, action);
+        i.putExtra(Constants.EXTRA_INSTANCE_ID, instId);
+        i.putExtra(Constants.EXTRA_ITEM_ID, Constants.KEY_DEPLOY_FOLDER);
+        String typ = "";
+        switch (action) {
+            case R.id.action_save_deploy_archive:
+                typ = "deploy";
+                break;
+            case R.id.action_save_policy_archive:
+                typ = "policy";
+                break;
+            case R.id.action_save_env_archive:
+                typ = "environment";
+                break;
+            case R.id.action_save_env_settings:
+                return;
+        }
+        String fnm = String.format("%s_%s_%s_%d.json", instId, archId, typ, ts);
+        String ttl = fnm;   //String.format("%s_%s_%s_%d.json", instId, archId, typ, ts);
+        String dsc = String.format("%s Archive Backup\nInstance: %s\nArchive Id: %s\nTaken %s by %s", typ, instId, archId, app.formatDatetime(ts), app.getCurrentServer().getUser());
+        i.putExtra(Constants.EXTRA_FILENAME, fnm);
+        i.putExtra(Intent.EXTRA_TITLE, ttl);
+        i.putExtra(Intent.EXTRA_TEXT, dsc);
+        startActivityForResult(i, 0);
+    }
+*/
 
     private void messagingActivity(String instId) {
         Intent i = new Intent(this, MessagingActivity.class);
@@ -309,9 +356,9 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
     }
 
     private void requestDeployDetails(String instId) {
-        DeploymentDetails dd = DeploymentModel.getInstance().getDeploymentDetails(instId);
+        DeploymentDetails dd = deployModel.getDeploymentDetails(instId);
         if (dd == null) {
-            DeploymentModel.getInstance().getDeploymentDetails(new DdCallback(instId));
+            deployModel.getDeploymentDetails(new DdCallback(instId));
         }
         else {
             showDeployDetails(instId);
@@ -326,7 +373,7 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
     }
 
     private void manageProperties(String instId, int what) {
-//        DeploymentDetails dd = DeploymentModel.getInstance().getDeploymentDetails(instId);
+//        DeploymentDetails dd = deployModel.getDeploymentDetails(instId);
 //        if (dd == null)
 //            return;
 //        DeploymentDetails.Props props = (what == R.id.action_policy_props ? dd.getPolicyProperties() : dd.getEnvironmentProperties());
@@ -338,15 +385,15 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
     }
 
     private void testDeployClient() {
-        Group g = model.getGroupById("group-6");
-        ApiClient client = BaseApp.getInstance().getApiClient();
+        Group g = topoModel.getGroupById("group-6");
+        ApiClient client = app.getApiClient();
         Request req = client.createRequest(String.format("api/deployment/archive/%s", g.getId()));
         client.executeAsyncRequest(req, new TestCallback());
     }
 
 /*
     private void testAddGateway() {
-        Group g = model.getGroupById("group-6");
+        Group g = topoModel.getGroupById("group-6");
         Service svc = new Service();
         svc.setManagementPort(28085);
         svc.setHostID("host-1");
@@ -354,7 +401,7 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
         svc.setName("New Gateway");
         svc.setScheme("HTTPS");
         svc.setType(Topology.ServiceType.gateway);
-        model.addGateway(g, svc, 28080, new PostCallback());
+        topoModel.addGateway(g, svc, 28080, new PostCallback());
     }
 */
 
@@ -372,9 +419,9 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
         String a = (start ? "start" : "stop");
         Callback cb = new GatewayActionCallback(instId, a);
         if (start)
-            model.startGateway(instId, cb);
+            topoModel.startGateway(instId, cb);
         else
-            model.stopGateway(instId, cb);
+            topoModel.stopGateway(instId, cb);
 
     }
 
@@ -389,26 +436,26 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
 
     private void performRemoveGateway(final String instId) {
         showProgress(true);
-        Group grp = model.getInstanceGroup(instId);
+        Group grp = topoModel.getInstanceGroup(instId);
         if (grp != null && grp.getServices().size() == 1) {
             orphanedGroup = grp;
         }
-        model.removeGateway(instId, true, new DeleteSvcCallback(instId));
+        topoModel.removeGateway(instId, true, new DeleteSvcCallback(instId));
     }
 
     @Override
     public Loader<Topology> onCreateLoader(int i, Bundle bundle) {
         Log.d(TAG, String.format("onCreateLoader: %d", i));
         if (i == TOPO_LOADER) {
-            model.reset();
-            return new TopologyLoader(this, BaseApp.getInstance().getApiClient());
+            topoModel.reset();
+            return new TopologyLoader(this, app.getApiClient());
         }
         return null;
     }
 
     @Override
     public void onLoadFinished(Loader<Topology> loader, Topology o) {
-        model.setTopology(o);
+        topoModel.setTopology(o);
         Log.d(TAG, String.format("onLoadFinished: %d", loader.getId()));
         postMessage(MSG_LOADER_FINISHED, loader.getId());
     }
@@ -419,27 +466,30 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
     }
 
     private void onTopologyLoaded() {
-        if (model.getTopology() == null) {
-            ServerInfo svr = BaseApp.getInstance().getCurrentServer();
+        if (topoModel.getTopology() == null) {
+            ServerInfo svr = app.getCurrentServer();
             finishWithAlert(String.format("Could not load topology. Is %s available?", svr == null ? "Node Manager" : svr.displayString()));
             return;
         }
 
         orphanedGroup = null;
-        replaceFragment(ctr01.getId(), TopologyFragment.newInstance(model), "topo");
-        DeploymentModel.getInstance().getDeploymentDetails(new DdCallback());
-        Topology t = model.getTopology();
+        deployModel.getDeploymentDetails(new DdCallback());
+    }
+
+    private void onDetailsLoaded() {
+        replaceFragment(ctr01.getId(), TopologyFragment.newInstance(), "topo");
+        Topology t = topoModel.getTopology();
         Collection<Service> svcs = t.getServices(Topology.ServiceType.gateway);
         for (Service s: svcs) {
-            model.getGatewayStatus(s.getId(), new GatewayActionCallback(s.getId(), "status"));
+            topoModel.getGatewayStatus(s.getId(), new GatewayActionCallback(s.getId(), "status"));
         }
         showProgress(false);
     }
 
     private void updateStatus(String sid, int stat) {
         Log.d(TAG, String.format("updateStatus %s: %d", sid, stat));
-        if (model != null)
-            model.setGatewayStatus(sid, stat);
+        if (topoModel != null)
+            topoModel.setGatewayStatus(sid, stat);
     }
 /*
 
@@ -512,7 +562,7 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
             confirmDialog(String.format("Delete empty group %s", orphanedGroup.getName()), new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialogInterface, int i) {
-                    model.removeGroup(orphanedGroup, new BaseCallback() {
+                    topoModel.removeGroup(orphanedGroup, new BaseCallback() {
                         @Override
                         protected void onSuccessResponse(int code, String msg, String body) {
                             showToast(String.format("%s deleted", orphanedGroup.getName()));
@@ -575,21 +625,22 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
                 return;
             if (j.has(JsonHelper.PROP_RESULT))
                 j = j.get(JsonHelper.PROP_RESULT).getAsJsonObject();
-//            DeploymentDetails dd = JsonHelper.getInstance().deploymentDetailsFromJson(j);
-            DeploymentModel.getInstance().setDeploymentDetails(j);
-            consistencyCheck();
-            if (instId != null)
+            deployModel.setDeploymentDetails(j);
+            if (instId == null)
+                onDetailsLoaded();
+            else
                 showDeployDetails(instId);
         }
     }
 
+/*
     private void consistencyCheck() {
-        for (Group g: model.getTopology().getGroups(Topology.ServiceType.gateway)) {
+        for (Group g: topoModel.getTopology().getGroups(Topology.ServiceType.gateway)) {
             Map<String, String> ids = new HashMap<>();
             Collection<Service> svcs = g.getServices();
             for (Service s: svcs) {
-                DeploymentDetails dd = DeploymentModel.getInstance().getDeploymentDetails(s.getId());
-                ids.put(s.getId(), dd.getRootProperties().getId());
+                DeploymentDetails dd = deployModel.getDeploymentDetails(s.getId());
+                ids.put(s.getId(), dd.getId());
             }
             String id = null;
             for (String k: ids.keySet()) {
@@ -605,6 +656,7 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
             }
         }
     }
+*/
 
     @Override
     protected void showProgress(final boolean show) {

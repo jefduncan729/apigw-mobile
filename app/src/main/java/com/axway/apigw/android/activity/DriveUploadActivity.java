@@ -6,9 +6,14 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.axway.apigw.android.BaseApp;
 import com.axway.apigw.android.Constants;
 import com.axway.apigw.android.JsonHelper;
 import com.axway.apigw.android.R;
+import com.axway.apigw.android.api.ApiClient;
+import com.axway.apigw.android.api.DeploymentModel;
+import com.axway.apigw.android.api.KpsModel;
+import com.axway.apigw.android.model.KpsStore;
 import com.axway.apigw.android.util.IOUtils;
 import com.axway.apigw.android.util.SafeAsyncTask;
 import com.google.android.gms.drive.Drive;
@@ -22,6 +27,10 @@ import com.google.gson.JsonObject;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
+
+import okhttp3.Request;
+import okhttp3.Response;
 
 /**
  * Created by su on 11/10/2015.
@@ -34,6 +43,11 @@ public class DriveUploadActivity extends BaseDriveActivity {
     private String fileTitle;
     private String fileDescription;
     private UploadTask uploadTask;
+    private int action;
+    private String instId;
+    private String storeId;
+    private DeploymentModel deployModel;
+    private KpsModel kpsModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,10 +59,15 @@ public class DriveUploadActivity extends BaseDriveActivity {
         else {
             args = savedInstanceState;
         }
+        deployModel = DeploymentModel.getInstance();
+        kpsModel = KpsModel.getInstance();
         folderKey = args.getString(Constants.EXTRA_ITEM_ID, "");
         filename = args.getString(Constants.EXTRA_FILENAME, "");
         fileDescription = args.getString(Intent.EXTRA_TEXT, "");
         fileTitle = args.getString(Intent.EXTRA_TITLE, "");
+        action = args.getInt(Constants.EXTRA_ACTION, 0);
+        instId = args.getString(Constants.EXTRA_INSTANCE_ID, null);
+        storeId = args.getString(Constants.EXTRA_KPS_STORE_ID, null);
         if (TextUtils.isEmpty(folderKey))
             throw new IllegalStateException("DriveUploadActivity expecting a folder key");
         showProgressFrag("Uploading to Drive");
@@ -61,6 +80,11 @@ public class DriveUploadActivity extends BaseDriveActivity {
         outState.putString(Constants.EXTRA_FILENAME, filename);
         outState.putString(Intent.EXTRA_TEXT, fileDescription);
         outState.putString(Intent.EXTRA_TITLE, fileTitle);
+        outState.putInt(Constants.EXTRA_ACTION, action);
+        if (instId != null)
+            outState.putString(Constants.EXTRA_INSTANCE_ID, instId);
+        if (storeId != null)
+            outState.putString(Constants.EXTRA_KPS_STORE_ID, storeId);
     }
 
     @Override
@@ -124,16 +148,47 @@ public class DriveUploadActivity extends BaseDriveActivity {
             }
             DriveContents dc = dcr.getDriveContents();
             Log.d(TAG, "uploading file " + filename);
-            FileInputStream fis = null;
+            InputStream fis = null;
+            Response apiResp = null;
+            ApiClient client = app.getApiClient();
+//            boolean closeBody = false;
             try {
-                fis = new FileInputStream(filename);
-                IOUtils.copy(fis, dc.getOutputStream());
+                switch (action) {
+                    case R.id.action_save_deploy_archive:
+                        apiResp = deployModel.getDeploymentArchiveForService(instId);
+                    break;
+                    case R.id.action_save_policy_archive:
+                        apiResp = deployModel.getPolicyArchiveForService(instId);
+                    break;
+                    case R.id.action_save_env_archive:
+                        apiResp = deployModel.getEnvironmentArchiveForService(instId);
+                    break;
+                    case R.id.action_upload:
+                        KpsStore store = kpsModel.getStoreById(storeId);
+                        String endpt = KpsModel.KPS_STORE_ENDPOINT.replace("{svcId}", instId).replace("{alias}", store.getAlias());
+                        Request req = client.createRequest(endpt);
+                        apiResp = client.executeRequest(req);
+                    break;
+                }
+                if (apiResp == null) {
+                    fis = new FileInputStream(filename);
+                }
+                else {
+                    if (apiResp.isSuccessful()) {
+                        fis = apiResp.body().byteStream();
+//                        closeBody = true;
+                    }
+                }
+                if (fis != null)
+                    IOUtils.copy(fis, dc.getOutputStream());
             } catch (FileNotFoundException e) {
                 Log.d(TAG, "file not found", e);
             } catch (IOException e) {
                 Log.d(TAG, "io exception", e);
             } finally {
                 IOUtils.closeQuietly(fis);
+//                if (closeBody)
+//                    apiResp.body().close();;
             }
             MetadataChangeSet mcs = new MetadataChangeSet.Builder()
                     .setMimeType("application/json")

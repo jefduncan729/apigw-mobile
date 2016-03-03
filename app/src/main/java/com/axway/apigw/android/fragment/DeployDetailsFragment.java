@@ -3,7 +3,6 @@ package com.axway.apigw.android.fragment;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
 import android.support.v4.app.ListFragment;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -15,7 +14,6 @@ import com.axway.apigw.android.JsonHelper;
 import com.axway.apigw.android.R;
 import com.axway.apigw.android.adapter.BaseListAdapter;
 import com.axway.apigw.android.api.DeploymentModel;
-import com.axway.apigw.android.event.ActionEvent;
 import com.axway.apigw.android.event.ItemSelectedEvent;
 import com.axway.apigw.android.model.DeploymentDetails;
 import com.axway.apigw.android.view.BasicViewHolder;
@@ -23,9 +21,6 @@ import com.google.gson.JsonObject;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import butterknife.Bind;
-import butterknife.ButterKnife;
 
 /**
  * Created by su on 2/26/2016.
@@ -35,9 +30,9 @@ public class DeployDetailsFragment extends ListFragment implements AdapterView.O
 //    @Bind(R.id.container01) ViewGroup parentView;
     private DeploymentDetails dd;
 
-    public static DeployDetailsFragment newInstance(String instId) {
+    public static DeployDetailsFragment newInstance(DeploymentDetails dd) {
         DeployDetailsFragment rv = new DeployDetailsFragment();
-        rv.dd = DeploymentModel.getInstance().getDeploymentDetails(instId);
+        rv.dd = dd; //DeploymentModel.getInstance().getDeploymentDetails(instId);
         return rv;
     }
 
@@ -92,9 +87,9 @@ public class DeployDetailsFragment extends ListFragment implements AdapterView.O
         public static DeployDtlsAdapter from(Context ctx, DeploymentDetails dd) {
             List<Entry> list = new ArrayList<>();
             if (dd != null) {
-                list.add(new Entry("Root Properties", dd.getRoot()));
-                list.add(new Entry("Policy Properties", dd.getPolicy()));
-                list.add(new Entry("Environment Properties", dd.getEnv()));
+                list.add(new Entry("Root Properties", dd.getRootProperties()));
+                list.add(new Entry("Policy Properties", dd.getPolicyProperties()));
+                list.add(new Entry("Environment Properties", dd.getEnvironmentProperties()));
             }
             return new DeployDtlsAdapter(ctx, list);
         }

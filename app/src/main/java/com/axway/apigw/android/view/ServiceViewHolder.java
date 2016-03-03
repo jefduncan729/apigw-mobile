@@ -67,4 +67,8 @@ public class ServiceViewHolder extends BasicViewHolder implements StatusObserver
     public void onStatusChange(String instId, int newVal) {
         setStatus(newVal);
     }
+
+    public ImageView getStatusImage() {
+        return statImg;
+    }
 }

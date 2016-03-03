@@ -33,7 +33,8 @@ abstract public class BaseDriveActivity extends BaseActivity implements GoogleAp
 
     private GoogleApiClient googleApiClient;
     private boolean resolvingError;
-    private String acctName;
+    protected String acctName;
+    private boolean connectedOnce;
 
     private String title;
     private String description;
@@ -46,6 +47,7 @@ abstract public class BaseDriveActivity extends BaseActivity implements GoogleAp
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(getLayoutId());
+        connectedOnce = false;
         if (savedInstanceState == null) {
             Log.d(TAG, "onCreate: savedInstanceState is null; first time?");
             googleApiClient = null;
@@ -71,6 +73,10 @@ abstract public class BaseDriveActivity extends BaseActivity implements GoogleAp
         //do nothing
     }
 
+    protected boolean connectInOnResume() {
+        return true;
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
@@ -89,13 +95,15 @@ abstract public class BaseDriveActivity extends BaseActivity implements GoogleAp
                     .setAccountName(acctName)
                     .build();
         }
-        Log.d(TAG, "onResume: connecting googleApiClient");
-        googleApiClient.connect();
+        if (connectInOnResume()) {
+            Log.d(TAG, "onResume: connecting googleApiClient");
+            connectToDrive();
+        }
     }
 
     @Override
     protected void onPause() {
-        if (googleApiClient != null) {
+        if (googleApiClient != null && (googleApiClient.isConnected() || googleApiClient.isConnecting())) {
             Log.d(TAG, "onPause: disconnecting googleApiClient");
             googleApiClient.disconnect();
         }
@@ -124,7 +132,7 @@ abstract public class BaseDriveActivity extends BaseActivity implements GoogleAp
             if (resultCode == RESULT_OK) {
                 if (googleApiClient != null && !googleApiClient.isConnecting() && !googleApiClient.isConnected()) {
                     Log.d(TAG, "connecting googleApiClient from Resolve Error");
-                    googleApiClient.connect();
+                    connectToDrive();
                 }
             }
             return;
@@ -135,7 +143,7 @@ abstract public class BaseDriveActivity extends BaseActivity implements GoogleAp
                 getPrefs().edit().putString(Constants.KEY_GOOGLE_ACCT, acctName).commit();
                 if (googleApiClient != null && !googleApiClient.isConnecting() && !googleApiClient.isConnected()) {
                     Log.d(TAG, "connecting googleApiClient from PickUser Activity");
-                    googleApiClient.connect();
+                    connectToDrive();
                 }
             }
             else if (resultCode == RESULT_CANCELED) {
@@ -154,7 +162,15 @@ abstract public class BaseDriveActivity extends BaseActivity implements GoogleAp
     @Override
     public void onConnected(Bundle bundle) {
         Log.d(TAG, "onConnected: " + (bundle == null ? "null" : bundle.toString()));
+        connectedOnce = true;
         handleOnConnected(bundle);
+    }
+
+    protected void connectToDrive() {
+        if (connectedOnce)
+            getGoogleApiClient().reconnect();
+        else
+            getGoogleApiClient().connect();
     }
 //
 //    private void saveToDrive() {
@@ -232,13 +248,14 @@ abstract public class BaseDriveActivity extends BaseActivity implements GoogleAp
         if (resolvingError) {
             return;
         }
+        Log.d(TAG, String.format("onConnectionFailed: %s", connectionResult));
         if (connectionResult.hasResolution()) {
             try {
                 resolvingError = true;
                 connectionResult.startResolutionForResult(this, REQ_RESOLVE_ERR);
             }
             catch (IntentSender.SendIntentException e) {
-                googleApiClient.connect();
+                connectToDrive();
             }
         }
         else {

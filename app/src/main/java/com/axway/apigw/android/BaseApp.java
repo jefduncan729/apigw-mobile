@@ -12,6 +12,7 @@ import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.preference.PreferenceManager;
+import android.text.format.DateUtils;
 import android.util.Log;
 import android.util.SparseArray;
 
@@ -277,4 +278,37 @@ public class BaseApp extends Application {
         String alias = String.format("%s_%d", info.getHost(), info.getPort());  //info.getHost() + "_" + Integer.toString(info.getPort());
         return keystoreManager().getCertPath(alias);
     }
+
+    public String relativeTime(long ts) {
+        int flags = 0;
+        return relativeTime(ts, DateUtils.SECOND_IN_MILLIS, DateUtils.WEEK_IN_MILLIS, flags);
+    }
+
+    public String relativeTime(long ts, int flags) {
+        return relativeTime(ts, DateUtils.SECOND_IN_MILLIS, DateUtils.WEEK_IN_MILLIS, flags);
+    }
+
+    public String relativeTime(long ts, long resolution) {
+        return relativeTime(ts, resolution, DateUtils.WEEK_IN_MILLIS, 0);
+
+    }
+
+    public String relativeTime(long ts, long resolution, long transResolution) {
+        return relativeTime(ts, resolution, transResolution, 0);
+    }
+
+    public String relativeTime(long ts, long resolution, long transResolution, int flags) {
+        return DateUtils.getRelativeDateTimeString(this, ts, resolution, transResolution, flags).toString();
+    }
+
+    public String formatDatetime(long time) {
+        return formatDatetime(time, DateUtils.FORMAT_ABBREV_ALL | DateUtils.FORMAT_SHOW_TIME | DateUtils.FORMAT_SHOW_DATE);
+    }
+
+    public String formatDatetime(long time, int flags) {
+        return DateUtils.formatDateTime(this, time, flags);
+    }
+
 }
+
+

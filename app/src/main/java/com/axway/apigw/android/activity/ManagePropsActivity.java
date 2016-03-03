@@ -23,13 +23,7 @@ import com.axway.apigw.android.util.NameValuePair;
 import com.google.gson.JsonObject;
 import com.squareup.otto.Subscribe;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
-
-import butterknife.Bind;
 
 /**
  * Created by su on 2/29/2016.
@@ -109,9 +103,9 @@ public class ManagePropsActivity extends EditActivity<JsonObject> {
         DeploymentDetails dd = DeploymentModel.getInstance().getDeploymentDetails(instId);
         int k = intent.getIntExtra(Constants.EXTRA_ITEM_TYPE, 0);
 //        Map<String, String> rv = new HashMap<>();
-        JsonObject rv = dd.getPolicy();
+        JsonObject rv = dd.getPolicyProperties();
         if (k == R.id.action_env_props)
-            rv = dd.getEnv();
+            rv = dd.getEnvironmentProperties();
 //        putNotNull(rv, "Id", props.getId());
 //        putNotNull(rv, "Description", props.getDescription());
 //        putNotNull(rv, "Manifest-Version", props.getManifestVersion());

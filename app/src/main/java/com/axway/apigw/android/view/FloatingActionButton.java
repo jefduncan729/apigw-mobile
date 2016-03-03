@@ -6,6 +6,9 @@ import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewOutlineProvider;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
+
+import com.axway.apigw.android.R;
 
 /**
  * Created by su on 4/10/2015.
@@ -24,6 +27,7 @@ public class FloatingActionButton extends FrameLayout implements View.OnClickLis
 //    };
 //
 //    private boolean checked;
+//    private ImageView img;
     private ClickedListener listener;
 
     public FloatingActionButton(Context context) {
@@ -102,5 +106,16 @@ public class FloatingActionButton extends FrameLayout implements View.OnClickLis
 //            mergeDrawableStates(rv, CHECKED_STATE_SET);
 //        }
         return rv;
+    }
+
+    public void setImageResource(int id) {
+        ImageView img = (ImageView)findViewById(R.id.fab_img);
+        if (img == null)
+            return;
+        img.setImageResource(id);
+    }
+
+    public ImageView getImageView() {
+        return (ImageView)findViewById(R.id.fab_img);
     }
 }

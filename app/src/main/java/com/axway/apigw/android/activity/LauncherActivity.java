@@ -105,7 +105,7 @@ public class LauncherActivity extends BaseActivity  {
                 else {
                     Intent i = new Intent(this, TopologyActivity.class);
                     i.setAction(Intent.ACTION_VIEW);
-                    BaseApp.getInstance().setCurrentServer(info);
+                    app.setCurrentServer(info);
                     startActivity(i);
                 }
                 finish();
@@ -136,11 +136,11 @@ public class LauncherActivity extends BaseActivity  {
     }
 
     private void connect() {
-        if (!BaseApp.getInstance().haveNetwork()) {
+        if (!app.haveNetwork()) {
             showToast("Network not available; check Settings");
             return;
         }
-        BaseApp.getInstance().setCurrentServer(null);
+        app.setCurrentServer(null);
         ServerInfo info = getOnlyServerInfo();
         if (info == null) {
             pickConnection();
@@ -198,7 +198,7 @@ public class LauncherActivity extends BaseActivity  {
 
     private void startConnection(ServerInfo info) {
         Intent i = new Intent(this, TopologyActivity.class);
-        BaseApp.getInstance().setCurrentServer(info);
+        app.setCurrentServer(info);
         i.setAction(Intent.ACTION_VIEW);
         startActivity(i);
     }

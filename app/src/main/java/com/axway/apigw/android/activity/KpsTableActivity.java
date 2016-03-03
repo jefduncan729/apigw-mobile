@@ -1,11 +1,14 @@
 package com.axway.apigw.android.activity;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Message;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toolbar;
@@ -34,6 +37,7 @@ public class KpsTableActivity extends BaseActivity implements LoaderManager.Load
     public static final String TAG = KpsTableActivity.class.getSimpleName();
 
     public static final int MSG_LOADED = Constants.MSG_BASE + 6001;
+    public static final int REQ_UPLOAD = Constants.MSG_BASE + 6002;
 
     @Bind(R.id.swipe_refresh) SwipeRefreshLayout swipeRefresh;
     @Bind(R.id.container01) ViewGroup ctr01;
@@ -81,6 +85,7 @@ public class KpsTableActivity extends BaseActivity implements LoaderManager.Load
 //        showProgress(true);
         toolbar.setTitle(String.format("Browsing %s", store.getAlias()));
         toolbar.setSubtitle(instId);
+        setActionBar(toolbar);
 //        refresh();
         getSupportLoaderManager().initLoader(0, null, this);
     }
@@ -90,6 +95,67 @@ public class KpsTableActivity extends BaseActivity implements LoaderManager.Load
         super.onSaveInstanceState(outState);
         outState.putString(Constants.EXTRA_INSTANCE_ID, instId);
         outState.putString(Constants.EXTRA_ITEM_ID, storeId);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.upload, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        MenuItem item = menu.findItem(R.id.action_upload);
+//        if (item != null && item.getIntent() == null) {
+//            Intent i = new Intent(Intent.ACTION_SEND);
+//            i.putExtra(Constants.EXTRA_INSTANCE_ID, instId);
+//            i.putExtra(Constants.EXTRA_ITEM_ID, storeId);
+//            item.setIntent(i);
+//        }
+        return super.onPrepareOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.action_upload) {
+            confirmUpload();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == REQ_UPLOAD) {
+            if (resultCode == RESULT_OK) {
+                showToast("upload successful");
+            }
+            return;
+        }
+        super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    private void confirmUpload() {
+        Log.d(TAG, String.format("confirmUpload: %s - %s", instId, storeId));
+        confirmDialog(getString(R.string.touch_to, "backup", storeId), new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                performUpload();
+            }
+        });
+
+    }
+
+    private void performUpload() {
+        Intent i = new Intent(this, DriveUploadActivity.class);
+        i.putExtra(Constants.EXTRA_INSTANCE_ID, instId);
+        i.putExtra(Constants.EXTRA_ITEM_ID, Constants.KEY_KPS_FOLDER);
+        i.putExtra(Constants.EXTRA_KPS_STORE_ID, storeId);
+        i.putExtra(Constants.EXTRA_ACTION, R.id.action_upload);
+        i.putExtra(Constants.EXTRA_FILENAME, String.format("%s_%s.json", instId, storeId));
+        i.putExtra(Intent.EXTRA_TITLE, String.format("%s_%s.json", instId, storeId));
+        i.putExtra(Intent.EXTRA_TEXT, String.format("KPS Backup: %s, %s", instId, storeId));
+        startActivityForResult(i, REQ_UPLOAD);
     }
 
     @Override
@@ -119,7 +185,7 @@ public class KpsTableActivity extends BaseActivity implements LoaderManager.Load
     @Override
     public android.support.v4.content.Loader<JsonArray> onCreateLoader(int id, Bundle args) {
         String endpoint = KpsModel.KPS_STORE_ENDPOINT.replace("{svcId}", instId).replace("{alias}", store.getAlias());
-        return new JsonArrayLoader(this, BaseApp.getInstance().getApiClient(), endpoint);
+        return new JsonArrayLoader(this, app.getApiClient(), endpoint);
     }
 
     @Override
@@ -144,7 +210,6 @@ public class KpsTableActivity extends BaseActivity implements LoaderManager.Load
 
     @Override
     public void onClicked(FloatingActionButton fab) {
-        showToast("FAB clicked!");
         Intent i = new Intent(this, KpsItemActivity.class);
         i.setAction(Intent.ACTION_INSERT);
         i.putExtra(Constants.EXTRA_JSON_ITEM, new JsonObject().toString());

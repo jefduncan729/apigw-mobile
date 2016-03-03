@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@id/action_save_deploy_archive"
+        android:title="@string/action_save_deploy_archive"
+        />
+
+    <item
+        android:id="@id/action_save_policy_archive"
+        android:title="@string/action_save_policy_archive"
+        />
+
+    <item
+        android:id="@id/action_save_env_archive"
+        android:title="@string/action_save_env_archive"
+        />
+
+</menu>

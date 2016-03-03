@@ -15,6 +15,7 @@ public class DeploymentDetails {
     private JsonObject policy;
     private JsonObject env;
 
+/*
     private Props rootProps;
     private Props policyProps;
     private Props envProps;
@@ -94,6 +95,7 @@ public class DeploymentDetails {
             this.versionComment = versionComment;
         }
     }
+*/
 
     public DeploymentDetails() {
         user = null;
@@ -125,6 +127,13 @@ public class DeploymentDetails {
         this.status = status;
     }
 
+    public String getId() {
+        JsonObject r = getRootProperties();
+        if (r == null || !r.has("Id"))
+            return null;
+        return r.get("Id").getAsString();
+    }
+/*
     public Props getRootProperties() {
         if (rootProps == null)
             rootProps = new Props();
@@ -142,8 +151,9 @@ public class DeploymentDetails {
             envProps = new Props();
         return envProps;
     }
+*/
 
-    public JsonObject getRoot() {
+    public JsonObject getRootProperties() {
         if (root == null) {
             root = new JsonObject();
             root.addProperty("Id", "");
@@ -152,7 +162,7 @@ public class DeploymentDetails {
         return root;
     }
 
-    public JsonObject getPolicy() {
+    public JsonObject getPolicyProperties() {
         if (policy == null) {
             policy = new JsonObject();
             _initialize(policy);
@@ -160,7 +170,7 @@ public class DeploymentDetails {
         return policy;
     }
 
-    public JsonObject getEnv() {
+    public JsonObject getEnvironmentProperties() {
         if (env == null) {
             env = new JsonObject();
             _initialize(env);
@@ -168,15 +178,15 @@ public class DeploymentDetails {
         return env;
     }
 
-    public void setRoot(JsonObject root) {
+    public void setRootProperties(JsonObject root) {
         this.root = root;
     }
 
-    public void setPolicy(JsonObject policy) {
+    public void setPolicyProperties(JsonObject policy) {
         this.policy = policy;
     }
 
-    public void setEnv(JsonObject env) {
+    public void setEnvironmentProperties(JsonObject env) {
         this.env = env;
     }
 
@@ -189,7 +199,8 @@ public class DeploymentDetails {
         j.addProperty("Version", "");
         j.addProperty("VersionComment", "");
     }
-    public Props createProps() {
-        return new Props();
-    }
+//
+//    public Props createProps() {
+//        return new Props();
+//    }
 }

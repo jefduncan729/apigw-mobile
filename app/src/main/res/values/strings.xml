@@ -28,11 +28,15 @@
     <string name="action_gateway_kps">Browse KPS</string>
     <string name="action_kps_structure">View Structure</string>
     <string name="action_kps_customize_list">Customize List Display</string>
-    <string name="action_deployment_details">Manage Deployments</string>
-    <string name="action_save_deploy_archive">Save Deployment Archive</string>
+    <string name="action_deployment_details">Deployment Details</string>
+    <string name="action_save_deploy_archive">Upload Deployment Archive</string>
+    <string name="action_save_policy_archive">Upload Policy Archive</string>
+    <string name="action_save_env_archive">Upload Environment Archive</string>
+    <string name="action_save_env_settings">Upload Environment Settings</string>
     <string name="action_policy_props">Policy Properties</string>
     <string name="action_env_props">Environment Properties</string>
     <string name="action_cfg_storage">Configure Cloud Storage</string>
+    <string name="action_upload">Upload</string>
 
     <string name="welcome">Welcome!</string>
 

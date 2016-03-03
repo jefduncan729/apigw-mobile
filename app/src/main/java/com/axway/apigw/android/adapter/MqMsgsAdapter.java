@@ -4,6 +4,7 @@ import android.content.Context;
 import android.text.TextUtils;
 import android.view.View;
 
+import com.axway.apigw.android.BaseApp;
 import com.axway.apigw.android.JsonHelper;
 import com.axway.apigw.android.R;
 import com.axway.apigw.android.model.MqConsumer;
@@ -47,7 +48,7 @@ public class MqMsgsAdapter extends JsonArrayAdapter {
         long kb = m.getMsgSize()/1024;
         if (kb <= 0)
             kb = 1;
-        sb.append("size: ").append(kb).append("KB, time: ").append(JsonHelper.getInstance().formatDatetime(m.getMsgTime()));
+        sb.append("size: ").append(kb).append("KB, time: ").append(BaseApp.getInstance().formatDatetime(m.getMsgTime()));
         return sb.toString();
     }
 }

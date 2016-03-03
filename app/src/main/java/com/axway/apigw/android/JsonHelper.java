@@ -38,10 +38,6 @@ import java.util.Set;
  */
 public class JsonHelper {
     private static final String TAG = JsonHelper.class.getSimpleName();
-    private static final String DATE_FMT = "MMM d, yyyy";
-    private static final String TIME_SHORT_FMT = "h:mm a";
-    private static final String TIME_LONG_FMT = "hh:mm:ss a";
-    private static final String DATE_TIME_FMT = DATE_FMT + " " + TIME_SHORT_FMT;
 
     public static final String PROP_CLIENT_ID = "clientId";
     public static final String PROP_SUBSCRIBER_NAME = "subscriberName";
@@ -121,13 +117,9 @@ public class JsonHelper {
     public static final String PROP_SELECTOR = "selector";
     public static final String PROP_SESSION_ID = "sessionId";
 
-    public static DateFormat DATE_TIME_FORMAT = new java.text.SimpleDateFormat(DATE_TIME_FMT, Locale.US);
-    public static DateFormat DATE_ONLY_FORMAT = new java.text.SimpleDateFormat(DATE_FMT, Locale.US);
-    public static DateFormat TIME_ONLY_FORMAT = new java.text.SimpleDateFormat(TIME_SHORT_FMT, Locale.US);
-    public static DateFormat TIME_LONG_FORMAT = new java.text.SimpleDateFormat(TIME_LONG_FMT, Locale.US);
-
     private static JsonHelper inst = null;
     private JsonParser parser;
+    private BaseApp app;
 
     private JsonHelper() {
         super();
@@ -137,6 +129,7 @@ public class JsonHelper {
     public static JsonHelper getInstance() {
         if (inst == null) {
             inst = new JsonHelper();
+            inst.app = BaseApp.getInstance();
         }
         return inst;
     }
@@ -145,24 +138,6 @@ public class JsonHelper {
         if (parser == null)
             parser = new JsonParser();
         return parser;
-    }
-
-    public String formatDatetime(long time) {
-        Date d = new Date(time);
-        String rv = DATE_TIME_FORMAT.format(d);
-        return rv;
-    }
-
-    public String formatDate(long time) {
-        Date d = new Date(time);
-        String rv = DATE_ONLY_FORMAT.format(d);
-        return rv;
-    }
-
-    public String formatTime(long time) {
-        Date d = new Date(time);
-        String rv = TIME_ONLY_FORMAT.format(d);
-        return rv;
     }
 
     public JsonElement parse(String json) {
@@ -867,9 +842,9 @@ public class JsonHelper {
         rv.addProperty(PROP_DEPLOYMENT_TIMESTAMP, dd.getTimestamp());
         if (dd.getStatus() != null)
             rv.addProperty(PROP_STATUS, dd.getStatus());
-        rv.add(PROP_ROOT_PROPERTIES, dd.getRoot()); //writeDdProps(dd.getRootProperties()));
-        rv.add(PROP_POLICY_PROPERTIES, dd.getPolicy()); //writeDdProps(dd.getPolicyProperties()));
-        rv.add(PROP_ENVIRONMENT_PROPERTIES, dd.getEnv());   //writeDdProps(dd.getEnvironmentProperties()));
+        rv.add(PROP_ROOT_PROPERTIES, dd.getRootProperties()); //writeDdProps(dd.getRootProperties()));
+        rv.add(PROP_POLICY_PROPERTIES, dd.getPolicyProperties()); //writeDdProps(dd.getPolicyProperties()));
+        rv.add(PROP_ENVIRONMENT_PROPERTIES, dd.getEnvironmentProperties());   //writeDdProps(dd.getEnvironmentProperties()));
         return rv;
     }
 
@@ -890,18 +865,18 @@ public class JsonHelper {
             rv.setTimestamp(json.get(PROP_DEPLOYMENT_TIMESTAMP).getAsLong());
         if (json.has(PROP_STATUS))
             rv.setStatus(json.get(PROP_STATUS).getAsString());
-        DeploymentDetails.Props props = null;
+//        DeploymentDetails.Props props = null;
         if (json.has(PROP_ROOT_PROPERTIES)) {
-            rv.setRoot(json.get(PROP_ROOT_PROPERTIES).getAsJsonObject());
+            rv.setRootProperties(json.get(PROP_ROOT_PROPERTIES).getAsJsonObject());
 //            readDdProps(rv.getRootProperties(), json.get(PROP_ROOT_PROPERTIES).getAsJsonObject());
         }
         if (json.has(PROP_POLICY_PROPERTIES)) {
-            rv.setPolicy(json.get(PROP_POLICY_PROPERTIES).getAsJsonObject());
+            rv.setPolicyProperties(json.get(PROP_POLICY_PROPERTIES).getAsJsonObject());
 //            props = rv.createProps();
 //            readDdProps(rv.getPolicyProperties(), json.get(PROP_POLICY_PROPERTIES).getAsJsonObject());
         }
         if (json.has(PROP_ENVIRONMENT_PROPERTIES)) {
-            rv.setEnv(json.get(PROP_ENVIRONMENT_PROPERTIES).getAsJsonObject());
+            rv.setEnvironmentProperties(json.get(PROP_ENVIRONMENT_PROPERTIES).getAsJsonObject());
 //            props = rv.createProps();
 //            readDdProps(rv.getEnvironmentProperties(), json.get(PROP_ENVIRONMENT_PROPERTIES).getAsJsonObject());
         }
@@ -958,17 +933,17 @@ public class JsonHelper {
         String indent = " ";
         sb.append(indent).append("user: ").append(dd.getUser()).append("\n");
         if (dd.getTimestamp() != 0)
-            sb.append(indent).append("deploymentTimestamp: ").append(formatDatetime(dd.getTimestamp())).append("\n");
+            sb.append(indent).append("deploymentTimestamp: ").append(app.formatDatetime(dd.getTimestamp())).append("\n");
         sb.append(indent).append("status: ").append(dd.getStatus()).append("\n");
 
         sb.append("\n").append(indent).append("Root Properties:\n");
-        sb.append(prettyPrint(dd.getRoot()));    //dd.getRootProperties()));
+        sb.append(prettyPrint(dd.getRootProperties()));    //dd.getRootProperties()));
 
         sb.append("\n").append(indent).append("Policy Properties:\n");
-        sb.append(prettyPrint(dd.getPolicy()));  //Properties()));
+        sb.append(prettyPrint(dd.getPolicyProperties()));  //Properties()));
 
         sb.append("\n").append(indent).append("Environment Properties:\n");
-        sb.append(prettyPrint(dd.getEnv())); //ironmentProperties()));
+        sb.append(prettyPrint(dd.getEnvironmentProperties())); //ironmentProperties()));
         return sb.toString();
     }
 
@@ -984,7 +959,10 @@ public class JsonHelper {
                 continue;
             JsonElement je = e.getValue();
             if (je.isJsonPrimitive()) {
-                sb.append("\n").append(k).append(": ").append(je.getAsJsonPrimitive().getAsString());
+                if ("Timestamp".equals(k))
+                    sb.append("\n").append(k).append(": ").append(app.formatDatetime(je.getAsLong()));
+                else
+                    sb.append("\n").append(k).append(": ").append(je.getAsJsonPrimitive().getAsString());
             }
             else if (je.isJsonObject()) {
                 sb.append("\n").append(k).append(prettyPrint(je.getAsJsonObject()));
@@ -993,7 +971,7 @@ public class JsonHelper {
                 sb.append("\n").append(k).append(je.getAsJsonArray());
             }
         }
-        return sb.toString();
+        return sb.toString().trim();
     }
 
     public List<NameValuePair> toNameValuePairs(JsonObject j) {
@@ -1014,6 +992,7 @@ public class JsonHelper {
         return rv;
     }
 
+/*
     public String prettyPrint(DeploymentDetails.Props props) {
         StringBuilder sb = new StringBuilder();
         if (props == null)
@@ -1035,6 +1014,7 @@ public class JsonHelper {
             sb.append(indent).append("VersionComment: ").append(props.getVersionComment()).append("\n");
         return sb.toString();
     }
+*/
 
     public MqDestination destinationFromJson(String str) {
         return destinationFromJson(parseAsObject(str));

@@ -42,6 +42,7 @@
             android:layout_gravity="bottom|end">
 
             <ImageView
+                android:id="@id/fab_img"
                 android:layout_width="@dimen/fab_icon_size"
                 android:layout_height="@dimen/fab_icon_size"
                 android:src="@drawable/fab_icons"
