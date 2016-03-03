@@ -3,6 +3,7 @@
 * Connection Manager - to manage connections to your Admin Node Managers
 * SSL Support - Internal keystore allows for easy SSL certificate trusting
 * Console - if you have a Terminal Emulator app on your device, you can SSH to your host(s) and/or start Gateways with a menu selection (currently works only with the jackpal.androidterm package)
+* Google Drive integration for KPS and Deployment backups
 
 ### Topology Management ###
 * Add/Edit/Remove Groups and Gateway Instances
