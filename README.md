@@ -1,3 +1,6 @@
+# APIGW Mobile
+API Gateway for Android
+
 ### Features ###
 
 * Connection Manager - to manage connections to your Admin Node Managers
@@ -36,11 +39,5 @@
 * com.google.android.gms:play-services-drive:8.4.0
 
 ### Android components used ###
-I experimented with a lot of the different framework components. I started out with an Android Service object to which I binded my Activities.
-This worked fairly well, but the communication between the service and activities was somewhat cumbersome. I also tried just doing the bulk
-of the work in one main activity and some AsyncTasks but that felt clunky. 
-I finally decided to use an AsyncTaskLoader for reads and an IntentService for updates. I use IntentService objects a lot; they're nice because 
-the async part is built right in and there's no need to worry about managing AsyncTasks. Activity and Fragment objects are used for display. 
-The Connection Manager is backed by a ContentProvider implementation and SQLite database. Oh, and Intent objects; they're used everywhere in 
-Android to communicate amongst components.
+The Connection Manager is backed by a ContentProvider implementation and SQLite database.
 
