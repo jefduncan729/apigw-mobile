@@ -56,16 +56,11 @@ public class ConnMgrListFragment extends ListFragment implements LoaderManager.L
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setHasOptionsMenu(true);
+        drawables = new Drawable[DRAWABLE_IDS.length];
+        for (int i = 0; i < DRAWABLE_IDS.length; i++)
+            drawables[i] = getActivity().getResources().getDrawable(DRAWABLE_IDS[i], null);
 		adapter = new ConnMgrAdapter(getActivity(), null, 0);
 		getLoaderManager().initLoader(0, null, this);
-	}
-
-	@Override
-	public void onAttach(Context ctx) {
-		super.onAttach(ctx);
-		drawables = new Drawable[DRAWABLE_IDS.length];
-		for (int i = 0; i < DRAWABLE_IDS.length; i++)
-			drawables[i] = ctx.getResources().getDrawable(DRAWABLE_IDS[i], null);
 	}
 
 	@Override

@@ -36,6 +36,9 @@ public class ConnMgrEditActivity extends EditActivity<ServerInfo> {
 
     @Override
     protected EditFrag<ServerInfo> createFragment(Bundle args, ServerInfo item) {
+        if (!BaseApp.getInstance().haveNetwork()) {
+            showToast("Network connection not available. Certificates cannot be checked.");
+        }
         return ConnMgrEditFrag.newInstance(item);
     }
 
@@ -50,7 +53,37 @@ public class ConnMgrEditActivity extends EditActivity<ServerInfo> {
     }
 
     @Override
+    public void save() {
+        try {
+            editFrag.validate();
+            Bundle extras = new Bundle();
+            editFrag.collect(item, extras);
+            ContentValues values = item.toValues(); //new ContentValues();
+            Uri uri = null;
+            if (item.getId() == 0) {
+                uri = getContentResolver().insert(DbHelper.ConnMgrColumns.CONTENT_URI, values);
+                String s = (uri == null ? "-1" : uri.getLastPathSegment());
+                item.setId(Integer.parseInt(s));
+            }
+            else {
+                uri = ContentUris.withAppendedId(DbHelper.ConnMgrColumns.CONTENT_URI, item.getId());
+                getContentResolver().update(uri, values, null, null);
+            }
+            if ((item.isSsl() && !item.isCertTrusted()) && item.getStatus() == Constants.STATUS_ACTIVE) {
+                checkCert(item);
+                return;
+            }
+            setResult(RESULT_OK);
+            finish();
+        }
+        catch (ValidationException e) {
+            showToast(e.getMessage());
+        }
+    }
+
+    @Override
     protected boolean saveItem(ServerInfo item, Bundle extras) {
+/*
         ContentValues values = item.toValues(); //new ContentValues();
         Uri uri = null;
         if (item.getId() == 0) {
@@ -66,6 +99,7 @@ public class ConnMgrEditActivity extends EditActivity<ServerInfo> {
             checkCert(item);
             return false;
         }
+*/
         return true;
     }
 
@@ -120,6 +154,10 @@ public class ConnMgrEditActivity extends EditActivity<ServerInfo> {
         getContentResolver().update(uri, values, null, null);
     }
 
+    private void requestFailed(Call call, IOException e) {
+        showToast(e.getMessage());
+    }
+
     @Override
     protected void setupToolbar(Toolbar toolbar) {
         super.setupToolbar(toolbar);
@@ -132,9 +170,17 @@ public class ConnMgrEditActivity extends EditActivity<ServerInfo> {
         final ApiClient client = ApiClient.from(info);
         client.checkCert(new Callback() {
             @Override
-            public void onFailure(Call call, IOException e) {
+            public void onFailure(final Call call, final IOException e) {
                 final CertPath cp = BaseApp.certPathFromThrowable(e);
-                if (cp != null) {
+                if (cp == null) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            requestFailed(call, e);
+                        }
+                    });
+                }
+                else {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {

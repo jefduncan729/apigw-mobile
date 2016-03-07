@@ -233,7 +233,8 @@ public class TopologyFragment extends Fragment implements View.OnClickListener {
                 menu.add(0, R.id.action_start_gateway, p++, R.string.action_start_gateway).setIntent(iData);
                 menu.add(0, R.id.action_delete, p++, R.string.action_delete).setIntent(iData);  //.setIcon(R.mipmap.ic_action_discard_holo_light);
             }
-            menu.add(0, R.id.action_deployment_details, p, R.string.action_deployment_details).setIntent(iData);
+            menu.add(0, R.id.action_deployment_details, p++, R.string.action_deployment_details).setIntent(iData);
+            menu.add(0, R.id.action_ssh_to_host, p, R.string.action_ssh_to_host).setIntent(iData);
 //            menu.add(0, R.id.action_policy_props, p++, R.string.action_policy_props).setIntent(iData);
 //            menu.add(0, R.id.action_env_props, p++, R.string.action_env_props).setIntent(iData);
             menu.setHeaderTitle(svc.getName());

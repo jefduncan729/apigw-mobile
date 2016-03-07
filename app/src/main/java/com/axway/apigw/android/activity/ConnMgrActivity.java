@@ -47,6 +47,9 @@ public class ConnMgrActivity extends BaseActivity {
 		super.onCreate(savedInstanceState);
         setContentView(R.layout.toolbar_pane);
         setResult(RESULT_CANCELED);
+        if (!BaseApp.getInstance().haveNetwork()) {
+            showToast("Network connection not available. Certificates cannot be checked.");
+        }
         ButterKnife.bind(this);
         toolbar.setTitle(R.string.conn_mgr);
         setActionBar(toolbar);
@@ -191,6 +194,10 @@ public class ConnMgrActivity extends BaseActivity {
     }
 
 	public void onCheckCert(Uri uri) {
+        if (!BaseApp.getInstance().haveNetwork()) {
+            showToast("Network connection not available. Certificates cannot be checked.");
+            return;
+        }
         final ServerInfo info = getFor(uri);
         if (info == null) {
             Log.e(TAG, "no server info found: " + uri.toString());

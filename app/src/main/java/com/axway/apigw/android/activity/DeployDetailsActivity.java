@@ -166,8 +166,20 @@ public class DeployDetailsActivity extends BaseDriveActivity implements Floating
     @Subscribe
     public void onPropsSelected(ItemSelectedEvent<DeployDetailsFragment.DeployDtlsAdapter.Entry> evt) {
         Log.d(TAG, String.format("onPropsSelected: %s", evt));
-/*
         DeployDetailsFragment.DeployDtlsAdapter.Entry e = (DeployDetailsFragment.DeployDtlsAdapter.Entry)evt.data;
+        JsonObject props = e.props;
+        int k = 0;
+        if ("Environment Properties".equals(e.title))
+            k = R.id.action_env_props;
+        else if ("Policy Properties".equals(e.title))
+            k = R.id.action_policy_props;
+        if (k == 0)
+            return;
+        Intent i = new Intent(this, ManagePropsActivity.class);
+        i.putExtra(Constants.EXTRA_INSTANCE_ID, instId);
+        i.putExtra(Constants.EXTRA_ITEM_TYPE, k);
+        startActivity(i);
+/*
 //        DeploymentDetails.Props props = e.props;
         JsonObject props = e.props;
         String aid = props.has("Id") ? props.get("Id").getAsString() : null;

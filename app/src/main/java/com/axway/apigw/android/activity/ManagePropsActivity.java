@@ -67,19 +67,6 @@ public class ManagePropsActivity extends EditActivity<JsonObject> {
 
     @Override
     protected JsonObject createItem(Intent intent) {
-/*
-        DeploymentDetails dd = new DeploymentDetails();
-        
-        Map<String, String> rv = new HashMap<>();
-        DeploymentDetails.Props props = dd.createProps();
-        putNotNull(rv, "Id", props.getId());
-        putNotNull(rv, "Description", props.getDescription());
-        putNotNull(rv, "Manifest-Version", props.getManifestVersion());
-        putNotNull(rv, "Name", props.getName());
-        putNotNull(rv, "Version", props.getVersion());
-        putNotNull(rv, "VersionComment", props.getVersionComment());
-        putNotNull(rv, "Timestamp", String.format("%d", props.getTimestamp()));
-*/
         JsonObject rv = new JsonObject();
         rv.addProperty("Id", "");
         rv.addProperty("Description", "");
@@ -102,17 +89,9 @@ public class ManagePropsActivity extends EditActivity<JsonObject> {
         String instId = intent.getStringExtra(Constants.EXTRA_INSTANCE_ID);
         DeploymentDetails dd = DeploymentModel.getInstance().getDeploymentDetails(instId);
         int k = intent.getIntExtra(Constants.EXTRA_ITEM_TYPE, 0);
-//        Map<String, String> rv = new HashMap<>();
         JsonObject rv = dd.getPolicyProperties();
         if (k == R.id.action_env_props)
             rv = dd.getEnvironmentProperties();
-//        putNotNull(rv, "Id", props.getId());
-//        putNotNull(rv, "Description", props.getDescription());
-//        putNotNull(rv, "Manifest-Version", props.getManifestVersion());
-//        putNotNull(rv, "Name", props.getName());
-//        putNotNull(rv, "Version", props.getVersion());
-//        putNotNull(rv, "VersionComment", props.getVersionComment());
-//        putNotNull(rv, "Timestamp", String.format("%d", props.getTimestamp()));
         return rv;
     }
 

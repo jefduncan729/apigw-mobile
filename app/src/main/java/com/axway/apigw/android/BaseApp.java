@@ -56,6 +56,7 @@ public class BaseApp extends Application {
     private int colorNdx;
     private ServerInfo curSrvr;
     private ApiClient apiClient;
+    private boolean haveConsole;
 
     @Override
     public void onCreate() {
@@ -71,6 +72,7 @@ public class BaseApp extends Application {
         }
         _inst = this;
         colorNdx = 0;
+        haveConsole = (getPackageManager().getLaunchIntentForPackage("jackpal.androidterm") != null);
     }
 
     @Override
@@ -309,6 +311,9 @@ public class BaseApp extends Application {
         return DateUtils.formatDateTime(this, time, flags);
     }
 
+    public boolean isConsoleAvailable() {
+        return haveConsole;
+    }
 }
 
 

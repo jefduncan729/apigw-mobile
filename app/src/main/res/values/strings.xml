@@ -25,6 +25,8 @@
     <string name="action_start_gateway">Start Gateway</string>
     <string name="action_stop_gateway">Stop Gateway</string>
     <string name="action_gateway_messaging">Messaging</string>
+    <string name="action_open_console">Open Console</string>
+    <string name="action_ssh_to_host">SSH To Host</string>
     <string name="action_gateway_kps">Browse KPS</string>
     <string name="action_kps_structure">View Structure</string>
     <string name="action_kps_customize_list">Customize List Display</string>
@@ -94,6 +96,9 @@
 
     <string name="general_settings">General</string>
     <string name="network_settings">Network</string>
+
+    <string name="open_console1">Open a console before SSHing to a host</string>
+    <string name="ssh_cmd">ssh %1$s@%2$s</string>
 
     <string-array name="signing_algorithms">
         <item>sha1</item>

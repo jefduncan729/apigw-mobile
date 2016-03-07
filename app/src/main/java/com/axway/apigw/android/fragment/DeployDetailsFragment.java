@@ -61,26 +61,6 @@ public class DeployDetailsFragment extends ListFragment implements AdapterView.O
             return;
         BaseApp.post(new ItemSelectedEvent<DeployDtlsAdapter.Entry>(e));
     }
-/*
-
-    private void buildViews(LayoutInflater inflater) {
-        if (dd == null || parentView == null)
-            return;
-        JsonHelper h = JsonHelper.getInstance();
-        parentView.addView(titledText(inflater, "Root Properties", h.prettyPrint(dd.getRootProperties())));
-        parentView.addView(titledText(inflater, "Policy Properties", h.prettyPrint(dd.getPolicyProperties())));
-        parentView.addView(titledText(inflater, "Environment Properties", h.prettyPrint(dd.getEnvironmentProperties())));
-    }
-
-    private View titledText(LayoutInflater inflater, String title, String text) {
-        View rv = inflater.inflate(R.layout.titled_text, null);
-        BasicViewHolder vh = new BasicViewHolder(rv, android.R.id.title, android.R.id.text1);
-        rv.setTag(vh);
-        vh.setText1(title);
-        vh.setText2(text);
-        return rv;
-    }
-*/
 
     public static class DeployDtlsAdapter extends BaseListAdapter<DeployDtlsAdapter.Entry> {
 

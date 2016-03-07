@@ -5,9 +5,13 @@ import android.app.LoaderManager;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.Loader;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Message;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
@@ -25,6 +29,7 @@ import com.axway.apigw.android.event.ActionEvent;
 import com.axway.apigw.android.event.CertValidationEvent;
 import com.axway.apigw.android.event.ClickEvent;
 import com.axway.apigw.android.fragment.EmptyFragment;
+import com.axway.apigw.android.fragment.ProgressFragment;
 import com.axway.apigw.android.fragment.TopologyFragment;
 import com.axway.apigw.android.model.DeploymentDetails;
 import com.axway.apigw.android.model.ServerInfo;
@@ -33,6 +38,7 @@ import com.axway.apigw.android.view.ServiceViewHolder;
 import com.google.gson.JsonObject;
 import com.squareup.otto.Subscribe;
 import com.vordel.api.topology.model.Group;
+import com.vordel.api.topology.model.Host;
 import com.vordel.api.topology.model.Service;
 import com.vordel.api.topology.model.Topology;
 
@@ -58,6 +64,8 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
 
     public static final int REQ_EDIT_SVC = 1;
     public static final int REQ_ADD_SVC = 2;
+    public static final int REQ_CONSOLE = 3;
+    public static final int REQ_CONSOLE_PERM = 4;
 
     public static final int TOPO_LOADER = 1;
     public static final int STATUS_LOADER = 2;
@@ -69,6 +77,8 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
     private TopologyModel topoModel;
     private DeploymentModel deployModel;
     private Group orphanedGroup;
+    private String consoleHandle;
+    private String sshTo;
 
     @Override
     protected boolean onHandleMessage(Message msg) {
@@ -100,6 +110,13 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
                 postEmptyMessage(Constants.MSG_REFRESH);
             }
         });
+        if (savedInstanceState == null) {
+            consoleHandle = null;
+        }
+        else {
+            consoleHandle = savedInstanceState.getString(Constants.EXTRA_CONSOLE_HANDLE);
+        }
+        sshTo = null;
         showProgress(true);
         ServerInfo server = app.getCurrentServer();
         topoModel = TopologyModel.getInstance();    //new TopologyModel(app.getApiClient());
@@ -107,6 +124,13 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
         toolbar.setTitle("Topology");
         toolbar.setSubtitle(server.displayString());
         getLoaderManager().initLoader(TOPO_LOADER, null, this);
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        if (!TextUtils.isEmpty(consoleHandle))
+            outState.putString(Constants.EXTRA_CONSOLE_HANDLE, consoleHandle);
     }
 
     @Override
@@ -186,7 +210,33 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
             }
             return;
         }
+        if (requestCode == REQ_CONSOLE) {
+            if (resultCode == RESULT_OK) {
+                if (data != null) {
+                    consoleHandle = data.getStringExtra(Constants.JACKPAL_EXTRA_WINDOW_HANDLE);
+                    Log.d(TAG, String.format("consoleHandle: %s", consoleHandle));
+                    if (!TextUtils.isEmpty(sshTo))
+                        sshToHost(sshTo);
+                }
+            }
+            return;
+        }
         super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        if (requestCode == REQ_CONSOLE_PERM) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Log.d(TAG, "permission granted");
+                openConsole(sshTo);
+            }
+            else {
+                Log.d(TAG, "permission denied");
+            }
+            return;
+        }
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
     private void resetClient() {
@@ -225,8 +275,8 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
 
     private void refresh() {
         showProgress(true);
-//        replaceFragment(ctr01.getId(), EmptyFragment.newInstance(), "topo");
-        getSupportFragmentManager().beginTransaction().replace(ctr01.getId(), EmptyFragment.newInstance(), "topo").commit();
+        replaceFragment(ctr01.getId(), ProgressFragment.newInstance("Loading"), "topo");
+//        getSupportFragmentManager().beginTransaction().replace(ctr01.getId(), EmptyFragment.newInstance(), "topo").commit();
         Log.d(TAG, "initLoader");
         getLoaderManager().destroyLoader(TOPO_LOADER);
         getLoaderManager().initLoader(TOPO_LOADER, null, this);
@@ -290,58 +340,11 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
             case R.id.action_deployment_details:
                 requestDeployDetails(instId);
                 break;
-/*
-            case R.id.action_save_deploy_archive:
-            case R.id.action_save_policy_archive:
-            case R.id.action_save_env_archive:
-            case R.id.action_save_env_settings:
-                uploadActivity(evt.id, instId, evt.data);
-                break;
-*/
-            case R.id.action_policy_props:
-            case R.id.action_env_props:
-//                manageProperties(instId, evt.id);
-                Intent i = new Intent(this, TestIntentService.class);
-                startService(i);
+            case R.id.action_ssh_to_host:
+                sshToHost(instId);
                 break;
         }
-//        if (!TextUtils.isEmpty(msg)) {
-//            showToast(String.format("%s: %s", msg, instId));
-//        }
     }
-/*
-
-    private void uploadActivity(int action, String instId, Intent intent) {
-        Intent i = new Intent(this, DriveUploadActivity.class);
-        DeploymentDetails dd = deployModel.getDeploymentDetails(instId);
-        String archId = dd.getId();
-        long ts = System.currentTimeMillis();
-        i.putExtra(Constants.EXTRA_ACTION, action);
-        i.putExtra(Constants.EXTRA_INSTANCE_ID, instId);
-        i.putExtra(Constants.EXTRA_ITEM_ID, Constants.KEY_DEPLOY_FOLDER);
-        String typ = "";
-        switch (action) {
-            case R.id.action_save_deploy_archive:
-                typ = "deploy";
-                break;
-            case R.id.action_save_policy_archive:
-                typ = "policy";
-                break;
-            case R.id.action_save_env_archive:
-                typ = "environment";
-                break;
-            case R.id.action_save_env_settings:
-                return;
-        }
-        String fnm = String.format("%s_%s_%s_%d.json", instId, archId, typ, ts);
-        String ttl = fnm;   //String.format("%s_%s_%s_%d.json", instId, archId, typ, ts);
-        String dsc = String.format("%s Archive Backup\nInstance: %s\nArchive Id: %s\nTaken %s by %s", typ, instId, archId, app.formatDatetime(ts), app.getCurrentServer().getUser());
-        i.putExtra(Constants.EXTRA_FILENAME, fnm);
-        i.putExtra(Intent.EXTRA_TITLE, ttl);
-        i.putExtra(Intent.EXTRA_TEXT, dsc);
-        startActivityForResult(i, 0);
-    }
-*/
 
     private void messagingActivity(String instId) {
         Intent i = new Intent(this, MessagingActivity.class);
@@ -372,6 +375,74 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
         startActivity(i);
     }
 
+    private void sshToHost(String instId) {
+        Log.d(TAG, String.format("sshToHost: %s", instId));
+        if (TextUtils.isEmpty(consoleHandle)) {
+//            sshTo = instId;
+//            showToast("Opening a console");
+            openConsole(instId);
+//            showToast(R.string.open_console1);
+            return;
+        }
+        sshTo = null;
+        Service svc = topoModel.getGatewayById(instId);
+        if (svc == null)
+            return;
+        Host h = topoModel.getHostById(svc.getHostID());
+        if (h == null)
+            return;
+        String cmd = getString(R.string.ssh_cmd, "jef", h.getName());
+        runScriptInConsole(consoleHandle, cmd);
+    }
+
+    private void openConsole() {
+        openConsole(null);
+    }
+
+    private void openConsole(String instId) {
+        Log.d(TAG, String.format("openConsole: %s", instId));
+        String perm = "jackpal.androidterm.permission.RUN_SCRIPT";
+        int can = ContextCompat.checkSelfPermission(this, perm);
+        if (can != PackageManager.PERMISSION_GRANTED) {
+            sshTo = instId;
+            Log.d(TAG, "requesting permission");
+            ActivityCompat.requestPermissions(this, new String[] {perm}, REQ_CONSOLE_PERM);
+            return;
+        }
+        sshTo = null;
+        Intent i = null;
+        try {
+            String action = (instId == null ? Constants.JACKPAL_ACTION_NEW_WINDOW : Constants.JACKPAL_ACTION_RUN_SCRIPT);
+            String cmd = (instId == null ? null : getString(R.string.ssh_cmd, "jef", "10.71.100.197"));
+            i = new Intent(action).addCategory(Intent.CATEGORY_DEFAULT);
+            if (consoleHandle != null) {
+                i.putExtra(Constants.JACKPAL_EXTRA_WINDOW_HANDLE, consoleHandle);
+            }
+            if (cmd != null)
+                i.putExtra(Constants.JACKPAL_EXTRA_INITIAL_CMD, cmd);
+            startActivityForResult(i, REQ_CONSOLE);
+        }
+        catch (Exception e) {
+            Log.e(TAG, e.getLocalizedMessage(), e);
+        }
+    }
+
+    private void runScriptInConsole(String consoleHandle, String script) {
+        Intent i = null;
+        try {
+            i = getPackageManager().getLaunchIntentForPackage(Constants.JACKPAL_TERMINAL_PACKAGE);
+            if (i != null) {
+                i = new Intent(Constants.JACKPAL_ACTION_RUN_SCRIPT).addCategory(Intent.CATEGORY_DEFAULT);
+                i.putExtra(Constants.JACKPAL_EXTRA_INITIAL_CMD, script);
+                if (consoleHandle != null)
+                    i.putExtra(Constants.JACKPAL_EXTRA_WINDOW_HANDLE, consoleHandle);
+                startActivityForResult(i, REQ_CONSOLE);
+            }
+        }
+        catch (Exception e) {
+            Log.e(TAG, e.getLocalizedMessage(), e);
+        }
+    }
     private void manageProperties(String instId, int what) {
 //        DeploymentDetails dd = deployModel.getDeploymentDetails(instId);
 //        if (dd == null)
@@ -491,46 +562,6 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
         if (topoModel != null)
             topoModel.setGatewayStatus(sid, stat);
     }
-/*
-
-    protected abstract class BaseCallback implements Callback {
-        @Override
-        public void onFailure(Call call, IOException e) {
-            showProgress(false);
-            Log.e(TAG, String.format("call failed: %s", call), e);
-            showToast(String.format("%s", e.getMessage()));
-        }
-
-        @Override
-        public void onResponse(final Call call, final Response response) throws IOException {
-            if (response.isSuccessful()) {
-                showProgress(false);
-                final String body = response.body().string();
-                response.body().close();
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        onSuccessResponse(response.code(), response.message(), body);
-                    }
-                });
-            }
-            else {
-                onFailure(call, new IOException(String.format("%d %s", response.code(), (response.message()))));
-            }
-        }
-
-        abstract protected void onSuccessResponse(int code, String msg, String body);
-    }
-*/
-/*
-
-    private class PostCallback extends BaseCallback {
-        @Override
-        protected void onSuccessResponse(int code, String msg, String body) {
-            refresh();
-        }
-    }
-*/
 
     private class GatewayActionCallback extends BaseCallback {
 
@@ -632,31 +663,6 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
                 showDeployDetails(instId);
         }
     }
-
-/*
-    private void consistencyCheck() {
-        for (Group g: topoModel.getTopology().getGroups(Topology.ServiceType.gateway)) {
-            Map<String, String> ids = new HashMap<>();
-            Collection<Service> svcs = g.getServices();
-            for (Service s: svcs) {
-                DeploymentDetails dd = deployModel.getDeploymentDetails(s.getId());
-                ids.put(s.getId(), dd.getId());
-            }
-            String id = null;
-            for (String k: ids.keySet()) {
-                if (id == null) {
-                    id = ids.get(k);
-                    continue;
-                }
-                if (!id.equals(ids.get(k))) {
-                    showToast(String.format("%s has inconsistent deployments!", g.getName()));
-                    break;
-                }
-                id = ids.get(k);
-            }
-        }
-    }
-*/
 
     @Override
     protected void showProgress(final boolean show) {
