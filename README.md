@@ -41,3 +41,11 @@ API Gateway for Android
 ### Android components used ###
 The Connection Manager is backed by a ContentProvider implementation and SQLite database.
 
+### Screenshots ###
+<img src="app/src/main/res/raw/home_screen.png" alt="Home screen" title="Home screen" height="480px" width="300px"/>&nbsp;
+<img src="app/src/main/res/raw/topology.png" alt="Topology Activity" title="Topology Activity" height="480px" width="300px"/>&nbsp;
+<img src="app/src/main/res/raw/add_instance.png" alt="Add Gateway" title="Add Gateway" height="480px" width="300px"/>&nbsp;
+<img src="app/src/main/res/raw/instance_ctx_menu.png" alt="Context menu for Gateway" title="Context menu for Gateway" height="480px" width="300px"/>&nbsp;
+<img src="app/src/main/res/raw/browse_kps.png" alt="Browse KPS" title="Browse KPS" height="480px" width="300px"/>&nbsp;
+<img src="app/src/main/res/raw/messaging.png" alt="Messaging" title="Messaging" height="480px" width="300px"/>&nbsp;
+<img src="app/src/main/res/raw/deploy_mgmt.png" alt="Deployment Management" title="Deployment Management" height="480px" width="300px"/>&nbsp;
