@@ -28,10 +28,11 @@ public class ObservableJsonObject extends Observable {
     private void addChangedKey(String key) {
         if (changedKeys == null)
             changedKeys = new HashSet<>();
-        if (!changedKeys.contains(key))
+        if (!changedKeys.contains(key)) {
             changedKeys.add(key);
-        setChanged();
-        notifyObservers(key);
+            setChanged();
+            notifyObservers(key);
+        }
     }
 
     public ObservableJsonObject setProperty(String key, String newVal) {
