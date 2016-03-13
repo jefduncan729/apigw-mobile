@@ -1180,4 +1180,81 @@ public class JsonHelper {
         json.addProperty(PROP_SELECTOR, con.getSelector());
         return json;
     }
+
+    public Wrapper wrap(JsonObject j) {
+        return new Wrapper(j);
+    }
+
+    public class Wrapper {
+        
+        JsonObject obj;
+
+        @Override
+        public String toString() {
+            return String.format("Wrapper{obj=%s}", obj);
+        }
+
+        public Wrapper(JsonObject obj) {
+            super();
+            this.obj = obj;
+        }
+
+        public String getString(String name) {
+            if (obj == null || !obj.has(name))
+                return null;
+            return obj.get(name).getAsString();
+        }
+
+        public boolean getBoolean(String name) {
+            if (obj == null || !obj.has(name))
+                return false;
+            return obj.get(name).getAsBoolean();
+        }
+
+        public int getInt(String name) {
+            return getInt(name, 0);
+        }
+        
+        public int getInt(String name, int def) {
+            if (obj == null || !obj.has(name))
+                return def;
+            return obj.get(name).getAsInt();
+        }
+
+        public long getLong(String name) {
+            return getLong(name, 0);
+        }
+
+        public long getLong(String name, long def) {
+            if (obj == null || !obj.has(name))
+                return def;
+            return obj.get(name).getAsLong();
+        }
+
+        public JsonArray getArray(String name) {
+            if (obj == null || !obj.has(name) || !obj.get(name).isJsonArray())
+                return null;
+            return obj.get(name).getAsJsonArray();
+        }
+
+        public JsonObject getObject(String name) {
+            if (obj == null || !obj.has(name) || !obj.get(name).isJsonObject())
+                return null;
+            return obj.get(name).getAsJsonObject();
+        }
+
+        public void setString(String name, String newVal) {
+            if (obj == null || !obj.has(name))
+                return;
+            obj.remove(name);
+            obj.addProperty(name, newVal);
+        }
+
+        public void setBoolean(String name, Boolean newVal) {
+            if (obj == null || !obj.has(name))
+                return;
+            obj.remove(name);
+            obj.addProperty(name, newVal);
+        }
+    }
 }

@@ -26,6 +26,7 @@ import com.axway.apigw.android.R;
 import com.axway.apigw.android.RequiredFieldException;
 import com.axway.apigw.android.ValidationException;
 import com.axway.apigw.android.api.TopologyModel;
+import com.axway.apigw.android.model.ObservableJsonObject;
 import com.axway.apigw.android.util.Utilities;
 import com.vordel.api.topology.model.Group;
 import com.vordel.api.topology.model.Service;
@@ -58,11 +59,13 @@ public class EditServiceFragment extends EditFrag<Service> implements TextWatche
     private Group grp;
     private int signAlgNdx;
     private TopologyModel topoModel = TopologyModel.getInstance();
+    private ObservableJsonObject observable;
 
-    public static EditServiceFragment newInstance(Group grp, Service svc) {
+    public static EditServiceFragment newInstance(Group grp, Service svc, ObservableJsonObject observable) {
         EditServiceFragment rv = new EditServiceFragment();
         rv.grp = grp;
         rv.item = svc;
+        rv.observable = observable;
         return rv;
     }
 
@@ -127,7 +130,7 @@ public class EditServiceFragment extends EditFrag<Service> implements TextWatche
         else {
             if (statImg != null) {
                 statImg.setImageDrawable(BaseApp.getInstance().statusDrawable(topoModel.getCachedStatus(item.getId())));
-                ViewCompat.setTransitionName(statImg, "img1");
+//                ViewCompat.setTransitionName(statImg, "img1");
             }
             show(ctrSvcPort, false);
             show(ctrHost, false);
@@ -158,7 +161,7 @@ public class EditServiceFragment extends EditFrag<Service> implements TextWatche
             edExtCa.setOnClickListener(this);
             edAlg.setOnItemSelectedListener(this);
         }
-        addTransitionListener();
+//        addTransitionListener();
     }
 
     private boolean addTransitionListener() {
@@ -222,7 +225,7 @@ public class EditServiceFragment extends EditFrag<Service> implements TextWatche
             throw new RequiredFieldException("Management Port");
         int mp = Utilities.strToIntDef(edMgmtPort.getText().toString(), 0);
         if (mp <= 0 || mp > 65535)
-            throw new ValidationException(String.format("Management Port must be in range %s to %s", 1, 65535));
+            throw new ValidationException(String.format("Management Port must be in range [%d..%d]", 1, 65535));
         if (adding) {
             if (TextUtils.isEmpty(edHost.getText().toString()))
                 throw new RequiredFieldException("Host");
@@ -232,7 +235,7 @@ public class EditServiceFragment extends EditFrag<Service> implements TextWatche
                 throw new RequiredFieldException("Services Port");
             int sp = Utilities.strToIntDef(edSvcPort.getText().toString(), 0);
             if (sp <= 0 || sp > 65535)
-                throw new ValidationException(String.format("Services Port must be in range %s to %s", 1, 65535));
+                throw new ValidationException(String.format("Services Port must be in range [%d..%d]", 1, 65535));
             if (mp == sp)
                 throw new ValidationException("Management and Services port cannot be equal");
         }
@@ -269,7 +272,24 @@ public class EditServiceFragment extends EditFrag<Service> implements TextWatche
 
     @Override
     public void onClick(View view) {
-        setDirty(true);
+//        setDirty(true);
+//        edName.addTextChangedListener(this);
+//        edMgmtPort.addTextChangedListener(this);
+//        if (adding) {
+//            edHost.addTextChangedListener(this);
+//            edGroup.addTextChangedListener(this);
+//            edSvcPort.addTextChangedListener(this);
+//            edSysCa.setOnClickListener(this);
+//            edUserCa.setOnClickListener(this);
+//            edExtCa.setOnClickListener(this);
+//            edAlg.setOnItemSelectedListener(this);
+//        }
+        switch (view.getId()) {
+            case R.id.edit_external_ca:
+                break;
+            case R.id.edit_enabled:
+                break;
+        }
     }
 
     @Override

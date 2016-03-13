@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.support.v4.app.ListFragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -23,13 +24,15 @@ import com.vordel.kps.json.Json;
 /**
  * Created by su on 2/18/2016.
  */
-abstract public class JsonArrayFragment extends ListFragment implements LoaderManager.LoaderCallbacks<JsonArray> {
+abstract public class JsonArrayFragment extends ListFragment { // implements LoaderManager.LoaderCallbacks<JsonArray>
+    private static final String TAG = JsonArrayFragment.class.getSimpleName();
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(hasOptsMenu());
-        getLoaderManager().initLoader(1, getArguments(), this);
+        loadData(savedInstanceState);
+//        getLoaderManager().initLoader(1, getArguments(), this);
     }
 
     @Override
@@ -56,15 +59,12 @@ abstract public class JsonArrayFragment extends ListFragment implements LoaderMa
         super.onPrepareOptionsMenu(menu);
     }
 
-    @Override
-    public void onLoadFinished(Loader<JsonArray> loader, JsonArray jsonElements) {
+    public void onLoadFinished(JsonArray jsonElements) {
+        Log.d(TAG, String.format("onLoadFinished: %s", jsonElements));
         setListAdapter(createAdapter(jsonElements));
     }
 
-    @Override
-    public void onLoaderReset(Loader<JsonArray> loader) {
-
-    }
+    abstract protected void loadData(Bundle savedState);
 
     @Override
     public void onListItemClick(ListView l, View v, int position, long id) {

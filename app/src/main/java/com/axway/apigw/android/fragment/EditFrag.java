@@ -42,7 +42,7 @@ abstract public class EditFrag<T> extends Fragment {
         return dirty;
     }
 
-    public void setDirty(boolean newVal) {
+    protected void setDirty(boolean newVal) {
         dirty = newVal;
 //        if (btnSave != null) {
 //            if (dirty) {

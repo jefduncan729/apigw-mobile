@@ -108,4 +108,13 @@
         <item>md5</item>
     </string-array>
 
+    <string-array name="trace_levels">
+        <item>FATAL</item>
+        <item>ERROR</item>
+        <item>INFO</item>
+        <item>DEBUG</item>
+        <item>DATA</item>
+        <item>From System Settings</item>
+    </string-array>
+
 </resources>

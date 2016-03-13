@@ -3,6 +3,7 @@ package com.axway.apigw.android.fragment;
 import android.app.Fragment;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.text.format.DateUtils;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
@@ -53,9 +54,6 @@ public class TopologyFragment extends Fragment implements View.OnClickListener {
 
     public static TopologyFragment newInstance(Bundle args) {
         TopologyFragment rv = new TopologyFragment();
-        rv.app = BaseApp.getInstance();
-        rv.topoModel = TopologyModel.getInstance();
-        rv.deployModel = DeploymentModel.getInstance();
         if (args != null)
             rv.setArguments(args);
         return rv;
@@ -96,6 +94,7 @@ public class TopologyFragment extends Fragment implements View.OnClickListener {
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
     }
 
     private View newSimpleText(LayoutInflater inflater, String txt) {
@@ -191,9 +190,13 @@ public class TopologyFragment extends Fragment implements View.OnClickListener {
         rv.setOnClickListener(this);
         return rv;
     }
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        app = BaseApp.getInstance();
+        topoModel = TopologyModel.getInstance();
+        deployModel = DeploymentModel.getInstance();
     }
 
     @Override
@@ -228,6 +231,7 @@ public class TopologyFragment extends Fragment implements View.OnClickListener {
                 menu.add(0, R.id.action_stop_gateway, p++, R.string.action_stop_gateway).setIntent(iData);
                 menu.add(0, R.id.action_gateway_kps, p++, R.string.action_gateway_kps).setIntent(iData);
                 menu.add(0, R.id.action_gateway_messaging, p++, R.string.action_gateway_messaging).setIntent(iData);
+                menu.add(0, R.id.action_svc_cfg, p++, R.string.action_settings).setIntent(iData);
             }
             else if (stat == TopologyModel.GATEWAY_STATUS_NOT_RUNNING) {
                 menu.add(0, R.id.action_start_gateway, p++, R.string.action_start_gateway).setIntent(iData);

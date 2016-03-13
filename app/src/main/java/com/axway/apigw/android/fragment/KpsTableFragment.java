@@ -103,7 +103,7 @@ public class KpsTableFragment extends ListFragment implements AdapterView.OnItem
 //        Intent data = new Intent()
 //            .putExtra(Constants.EXTRA_ITEM_ID, e.id)
 //            .putExtra(Constants.EXTRA_ITEM_TYPE, e.type);
-//        BaseApp.post(new ActionEvent(R.id.action_select, data));
+//        BaseApp.postEvent(new ActionEvent(R.id.action_select, data));
     }
 
     protected void refreshAdapter() {

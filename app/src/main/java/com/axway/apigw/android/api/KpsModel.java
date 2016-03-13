@@ -1,9 +1,15 @@
 package com.axway.apigw.android.api;
 
+import android.util.Log;
+
+import com.axway.apigw.android.BaseApp;
 import com.axway.apigw.android.R;
 import com.axway.apigw.android.model.Kps;
 import com.axway.apigw.android.model.KpsStore;
 import com.axway.apigw.android.model.KpsType;
+
+import okhttp3.Callback;
+import okhttp3.Request;
 
 /**
  * Created by su on 10/5/2015.
@@ -11,18 +17,18 @@ import com.axway.apigw.android.model.KpsType;
 public class KpsModel extends ApiModel {
     private static final String TAG = KpsModel.class.getSimpleName();
 
-    public static final String KPS_ENDPOINT = "api/router/service/{svcId}/api/kps";
-    public static final String KPS_STORE_ENDPOINT = "api/router/service/{svcId}/api/kps/{alias}";
-    public static final String KPS_START_ENDPOINT = KPS_ENDPOINT + "/iterator/start/{alias}";
-    public static final String KPS_NEXT_ENDPOINT = KPS_ENDPOINT + "/iterator/next/{alias}";
-
-    public static final int[] SPINNER_IDS = {R.id.spinner01, R.id.spinner02, R.id.spinner03};  //, R.id.spinner04, R.id.spinner05, R.id.spinner06, R.id.spinner07, R.id.spinner08, R.id.spinner09};
-    public static final int MAX_ROWS = 3;
-    public static final String NOT_USED = "(not used}";
-
+    public static final String KPS_ENDPOINT = "api/router/service/%s/api/kps";
+    public static final String KPS_STORE_ENDPOINT = KPS_ENDPOINT + "/%s";
+    public static final String KPS_START_ENDPOINT = KPS_ENDPOINT + "/iterator/start/%s";
+    public static final String KPS_NEXT_ENDPOINT = KPS_ENDPOINT + "/iterator/next/%s";
 
     private static KpsModel instance = null;
     private Kps kps;
+
+    protected KpsModel() {
+        super();
+        reset();
+    }
 
     public static KpsModel getInstance() {
         if (instance == null) {
@@ -40,7 +46,11 @@ public class KpsModel extends ApiModel {
         this.kps = kps;
     }
 
-    private void reset() {
+    public void reset() {
+        Log.d(TAG, "reset");
+        if (kps != null) {
+            kps.reset();
+        }
         kps = null;
     }
 
@@ -99,5 +109,13 @@ public class KpsModel extends ApiModel {
         if (kps == null)
             return null;
         return kps.getType(typeId);
+    }
+
+    public Request loadKps(String instId, Callback cb) {
+        assert client != null;
+        assert cb != null;
+        Request req = client.createRequest(String.format(KPS_ENDPOINT, instId));
+        client.executeAsyncRequest(req, cb);
+        return req;
     }
 }

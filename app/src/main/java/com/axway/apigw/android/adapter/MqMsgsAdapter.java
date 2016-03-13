@@ -20,11 +20,8 @@ import com.google.gson.JsonObject;
  */
 public class MqMsgsAdapter extends JsonArrayAdapter {
 
-    private String kind;
-
-    public MqMsgsAdapter(Context ctx, JsonArray a, String kind) {
+    public MqMsgsAdapter(Context ctx, JsonArray a) {
         super(ctx, a);
-        this.kind = kind;
     }
 
     @Override
@@ -36,7 +33,7 @@ public class MqMsgsAdapter extends JsonArrayAdapter {
     protected void populateView(View rv, JsonObject j) {
         BasicViewHolder vh = (BasicViewHolder)rv.getTag();
         vh.getImageView().setVisibility(View.GONE);
-        MqMessage m = JsonHelper.getInstance().mqMessageFromJson(j);
+        MqMessage m = jsonHelper.mqMessageFromJson(j);
         if (m != null) {
             vh.setText1(m.getMsgId());
             vh.setText2(buildDetail(m));

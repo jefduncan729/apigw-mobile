@@ -28,6 +28,7 @@
     <item type="id" name="action_remove_trust"/>
     <item type="id" name="action_start_gateway"/>
     <item type="id" name="action_stop_gateway"/>
+    <item type="id" name="action_svc_cfg"/>
     <item type="id" name="action_gateway_messaging"/>
     <item type="id" name="action_gateway_kps"/>
     <item type="id" name="action_kps_structure"/>

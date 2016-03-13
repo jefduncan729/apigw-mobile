@@ -94,34 +94,34 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
         if (chkInternalKps == null)
             return;
         boolean b = prefs.getBoolean(Constants.KEY_SHOW_INTERNAL_KPS, Constants.DEF_SHOW_INTERNAL_KPS);
-        StringBuilder sb = new StringBuilder("Internal KPS stores will");
-        if (!b)
-            sb.append(" not");
-        sb.append(" be shown");
-        chkInternalKps.setSummary(sb.toString());
+//        StringBuilder sb = new StringBuilder("Internal KPS stores will");
+//        if (!b)
+//            sb.append(" not");
+//        sb.append(" be shown");
+        chkInternalKps.setSummary(String.format("Internal KPS stores will%s be shown", (b ? "" : " not")));  //sb.toString());
     }
 
     private void setShowAdvisory(SharedPreferences prefs) {
         if (chkShowAdvisory == null)
             return;
         boolean b = prefs.getBoolean(Constants.KEY_SHOW_ADVISORIES, false);
-        StringBuilder sb = new StringBuilder("Advisory Topics will");
-        if (!b)
-            sb.append(" not");
-        sb.append(" be shown");
-        chkShowAdvisory.setSummary(sb.toString());
+//        StringBuilder sb = new StringBuilder("Advisory Topics will");
+//        if (!b)
+//            sb.append(" not");
+//        sb.append(" be shown");
+        chkShowAdvisory.setSummary(String.format("Advisory Topics will%s be shown", (b ? "" : " not")));  //sb.toString());
     }
 
     private void setWifiOnly(SharedPreferences prefs) {
         if (chkWifiOnly == null)
             return;
         boolean b = prefs.getBoolean(Constants.KEY_WIFI_ONLY, true);
-        StringBuilder sb = new StringBuilder("Connections will be made ");
-        if (b)
-            sb.append("only over Wifi network");
-        else
-            sb.append("on either Wifi or cellular network");
-        chkWifiOnly.setSummary(sb.toString());
+//        StringBuilder sb = new StringBuilder("Connections will be made ");
+//        if (b)
+//            sb.append("only over Wifi network");
+//        else
+//            sb.append("on either Wifi or cellular network");
+        chkWifiOnly.setSummary(String.format("Connections will be made %s", b ? "only over Wifi network" : "on either Wifi or cellular network"));
     }
 
     private void setBatchSize(SharedPreferences prefs) {

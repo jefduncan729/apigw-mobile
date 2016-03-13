@@ -9,6 +9,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Message;
 import android.util.Log;
+import android.view.View;
 import android.widget.Toolbar;
 
 import com.axway.apigw.android.BaseApp;
@@ -19,6 +20,7 @@ import com.axway.apigw.android.db.DbHelper;
 import com.axway.apigw.android.event.ActionEvent;
 import com.axway.apigw.android.fragment.ConnMgrListFragment;
 import com.axway.apigw.android.model.ServerInfo;
+import com.axway.apigw.android.view.FloatingActionButton;
 import com.squareup.otto.Subscribe;
 
 import java.io.IOException;
@@ -40,8 +42,6 @@ public class ConnMgrActivity extends BaseActivity {
     private static final int REQ_ADD_SERVER = 1002;
     private static final int REQ_EDIT_SERVER = 1003;
 
-    @Bind(R.id.toolbar) Toolbar toolbar;
-
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -51,8 +51,6 @@ public class ConnMgrActivity extends BaseActivity {
             showToast("Network connection not available. Certificates cannot be checked.");
         }
         ButterKnife.bind(this);
-        toolbar.setTitle(R.string.conn_mgr);
-        setActionBar(toolbar);
         int cnt = getIntent().getIntExtra(Intent.EXTRA_LOCAL_ONLY, -1);
         if (cnt == 0) {
             postEmptyMessage(MSG_ADD_NEW);
@@ -62,6 +60,15 @@ public class ConnMgrActivity extends BaseActivity {
             refreshFrag();
         }
 	}
+
+    @Override
+    protected void setupToolbar(Toolbar tb) {
+        tb.setTitle(R.string.conn_mgr);
+    }
+
+    protected void setupFab(FloatingActionButton f) {
+        f.setVisibility(View.VISIBLE);
+    }
 
     @Override
     protected void onResume() {
@@ -287,5 +294,10 @@ public class ConnMgrActivity extends BaseActivity {
             return true;
         }
         return super.onHandleMessage(msg);
+    }
+
+    @Override
+    public void onClicked(FloatingActionButton fab) {
+        onAdd();
     }
 }

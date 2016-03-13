@@ -28,6 +28,8 @@ public class CheckboxHolder {
         viewType = 0;
         label = (TextView) rv.findViewById(labelId);
         edit = (CheckBox) rv.findViewById(editId);
+        if (edit != null)
+            edit.setTag(this);
         data = null;
     }
 
@@ -49,6 +51,13 @@ public class CheckboxHolder {
         if (edit == null)
             return false;
         return edit.isChecked();
+    }
+
+    public CheckboxHolder setListener(View.OnClickListener l) {
+        if (edit == null)
+            return this;
+        edit.setOnClickListener(l);
+        return this;
     }
 
     public CheckboxHolder setData(Object o) {

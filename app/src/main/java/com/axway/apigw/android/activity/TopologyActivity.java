@@ -1,10 +1,8 @@
 package com.axway.apigw.android.activity;
 
 import android.app.ActivityOptions;
-import android.app.LoaderManager;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.Loader;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Message;
@@ -21,20 +19,18 @@ import com.axway.apigw.android.BaseApp;
 import com.axway.apigw.android.Constants;
 import com.axway.apigw.android.JsonHelper;
 import com.axway.apigw.android.R;
-import com.axway.apigw.android.api.ApiClient;
 import com.axway.apigw.android.api.DeploymentModel;
-import com.axway.apigw.android.api.TopologyLoader;
 import com.axway.apigw.android.api.TopologyModel;
 import com.axway.apigw.android.event.ActionEvent;
-import com.axway.apigw.android.event.CertValidationEvent;
 import com.axway.apigw.android.event.ClickEvent;
-import com.axway.apigw.android.fragment.EmptyFragment;
+import com.axway.apigw.android.event.RequestTopologyEvent;
 import com.axway.apigw.android.fragment.ProgressFragment;
 import com.axway.apigw.android.fragment.TopologyFragment;
 import com.axway.apigw.android.model.DeploymentDetails;
 import com.axway.apigw.android.model.ServerInfo;
-import com.axway.apigw.android.service.TestIntentService;
+import com.axway.apigw.android.model.ServiceConfig;
 import com.axway.apigw.android.view.ServiceViewHolder;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.squareup.otto.Subscribe;
 import com.vordel.api.topology.model.Group;
@@ -42,20 +38,16 @@ import com.vordel.api.topology.model.Host;
 import com.vordel.api.topology.model.Service;
 import com.vordel.api.topology.model.Topology;
 
-import java.security.cert.CertPath;
-import java.security.cert.Certificate;
-import java.security.cert.X509Certificate;
 import java.util.Collection;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import okhttp3.Callback;
-import okhttp3.Request;
 
 /**
  * Created by su on 1/22/2016.
  */
-public class TopologyActivity extends BaseActivity implements LoaderManager.LoaderCallbacks<Topology> {
+public class TopologyActivity extends BaseActivity {
 
     private static final String TAG = TopologyActivity.class.getSimpleName();
 
@@ -67,16 +59,12 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
     public static final int REQ_CONSOLE = 3;
     public static final int REQ_CONSOLE_PERM = 4;
 
-    public static final int TOPO_LOADER = 1;
-    public static final int STATUS_LOADER = 2;
-
     @Bind(R.id.swipe_refresh) SwipeRefreshLayout swipeRefresh;
     @Bind(R.id.container01) ViewGroup ctr01;
-    @Bind(R.id.toolbar) Toolbar toolbar;
 
     private TopologyModel topoModel;
     private DeploymentModel deployModel;
-    private Group orphanedGroup;
+
     private String consoleHandle;
     private String sshTo;
 
@@ -84,11 +72,6 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
     protected boolean onHandleMessage(Message msg) {
         int w = msg.what;
         switch (w) {
-            case MSG_LOADER_FINISHED:
-                if (msg.arg1 == TOPO_LOADER) {
-                    onTopologyLoaded();
-                    return true;
-                }
             case Constants.MSG_REFRESH:
                 refresh();
                 return true;
@@ -99,7 +82,8 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-//        BaseApp.keystoreManager().removeKeystore();
+        topoModel = TopologyModel.getInstance();    //new TopologyModel(app.getApiClient());
+        deployModel = DeploymentModel.getInstance();
         setContentView(R.layout.toolbar_swipe);
         ButterKnife.bind(this);
         swipeRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
@@ -117,13 +101,17 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
             consoleHandle = savedInstanceState.getString(Constants.EXTRA_CONSOLE_HANDLE);
         }
         sshTo = null;
-        showProgress(true);
-        ServerInfo server = app.getCurrentServer();
-        topoModel = TopologyModel.getInstance();    //new TopologyModel(app.getApiClient());
-        deployModel = DeploymentModel.getInstance();
-        toolbar.setTitle("Topology");
-        toolbar.setSubtitle(server.displayString());
-        getLoaderManager().initLoader(TOPO_LOADER, null, this);
+        if (topoModel.getTopology() == null) {
+            refresh();
+            return;
+        }
+        onTopologyLoaded();
+    }
+
+    @Override
+    protected void setupToolbar(Toolbar tb) {
+        tb.setTitle("Topology");
+        tb.setSubtitle(app.getCurrentServer().displayString());
     }
 
     @Override
@@ -137,25 +125,12 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
     protected void onResume() {
         super.onResume();
         BaseApp.bus().register(this);
-//        checkCert();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         BaseApp.bus().unregister(this);
-    }
-
-    @Override
-    protected void onStop() {
-        Log.d(TAG, "onStop");
-        super.onStop();
-    }
-
-    @Override
-    protected void onDestroy() {
-        Log.d(TAG, "onDestroy");
-        super.onDestroy();
     }
 
     @Override
@@ -247,7 +222,7 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
         Intent i = new Intent(this, EditServiceActivity.class);
         i.setAction(Intent.ACTION_EDIT);
         Group g = topoModel.getInstanceGroup(svc.getId());
-        i.putExtra(Constants.EXTRA_JSON_ITEM, JsonHelper.getInstance().toJson(svc).toString());
+        i.putExtra(Constants.EXTRA_JSON_ITEM, jsonHelper.toJson(svc).toString());
         i.putExtra(Constants.EXTRA_GROUP_ID, g.getId());
         if (opts == null)
             startActivityForResult(i, REQ_EDIT_SVC);
@@ -259,57 +234,15 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
         Intent i = new Intent(this, EditServiceActivity.class);
         Service svc = new Service();
         i.setAction(Intent.ACTION_INSERT);
-        i.putExtra(Constants.EXTRA_JSON_ITEM, JsonHelper.getInstance().toJson(svc).toString());
+        i.putExtra(Constants.EXTRA_JSON_ITEM, jsonHelper.toJson(svc).toString());
         i.putExtra(Constants.EXTRA_GROUP_ID, grpId);
         startActivityForResult(i, REQ_ADD_SVC);
     }
 
-    protected void post(final Object evt) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                BaseApp.post(evt);
-            }
-        });
-    }
-
     private void refresh() {
-        showProgress(true);
-        replaceFragment(ctr01.getId(), ProgressFragment.newInstance("Loading"), "topo");
-//        getSupportFragmentManager().beginTransaction().replace(ctr01.getId(), EmptyFragment.newInstance(), "topo").commit();
-        Log.d(TAG, "initLoader");
-        getLoaderManager().destroyLoader(TOPO_LOADER);
-        getLoaderManager().initLoader(TOPO_LOADER, null, this);
-    }
-
-    @Subscribe
-    public void onCertValidationEvent(CertValidationEvent evt) {  //final CertPath cp, final String alias) {
-        final CertPath cp = evt.cp;
-        final String alias = evt.alias;
-        StringBuilder sb = new StringBuilder();
-        int i = 0;
-        for (Certificate c : cp.getCertificates()) {
-            if (c.getType().equals("X.509")) {
-                X509Certificate c509 = (X509Certificate) c;
-                sb.append("[").append(++i).append("]: ").append(c509.getSubjectDN().toString()).append("\n");
-            }
-        }
-        sb.append("\n").append(getString(R.string.add_to_truststore));
-
-        confirmDialog(getString(R.string.cert_not_trusted), sb.toString(), new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialogInterface, int i) {
-                BaseApp.keystoreManager().addTrustedCert(alias, cp);
-                showToast("Cert trusted " + alias);
-                resetClient();
-                refresh();
-            }
-        }, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialogInterface, int i) {
-                showToast("Cancelled");
-            }
-        });
+        Log.d(TAG, "refresh");
+        replaceFragment(ctr01.getId(), ProgressFragment.newInstance("Loading topology"), "topo");
+        topoModel.loadTopology(new TopoCallback());
     }
 
     @Subscribe
@@ -343,6 +276,9 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
             case R.id.action_ssh_to_host:
                 sshToHost(instId);
                 break;
+            case R.id.action_svc_cfg:
+                svcCfgActivity(instId);
+                break;
         }
     }
 
@@ -358,10 +294,16 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
         startActivity(i);
     }
 
+    private void svcCfgActivity(String instId) {
+        Intent i = new Intent(this, SvcCfgActivity.class);
+        i.putExtra(Constants.EXTRA_INSTANCE_ID, instId);
+        startActivity(i);
+    }
+
     private void requestDeployDetails(String instId) {
         DeploymentDetails dd = deployModel.getDeploymentDetails(instId);
         if (dd == null) {
-            deployModel.getDeploymentDetails(new DdCallback(instId));
+            deployModel.loadDeploymentDetails(new DdCallback(instId));
         }
         else {
             showDeployDetails(instId);
@@ -369,7 +311,6 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
     }
 
     private void showDeployDetails(String instId) {
-//        Log.d(TAG, String.format("showDeployDetails: %s, %s", instId, dd));
         Intent i = new Intent(this, DeployDetailsActivity.class);
         i.putExtra(Constants.EXTRA_INSTANCE_ID, instId);
         startActivity(i);
@@ -443,38 +384,6 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
             Log.e(TAG, e.getLocalizedMessage(), e);
         }
     }
-    private void manageProperties(String instId, int what) {
-//        DeploymentDetails dd = deployModel.getDeploymentDetails(instId);
-//        if (dd == null)
-//            return;
-//        DeploymentDetails.Props props = (what == R.id.action_policy_props ? dd.getPolicyProperties() : dd.getEnvironmentProperties());
-        Log.d(TAG, String.format("manageProperties: %s, %s", instId, what));
-        Intent i = new Intent(this, ManagePropsActivity.class);
-        i.putExtra(Constants.EXTRA_INSTANCE_ID, instId);
-        i.putExtra(Constants.EXTRA_ITEM_TYPE, what);
-        startActivity(i);
-    }
-
-    private void testDeployClient() {
-        Group g = topoModel.getGroupById("group-6");
-        ApiClient client = app.getApiClient();
-        Request req = client.createRequest(String.format("api/deployment/archive/%s", g.getId()));
-        client.executeAsyncRequest(req, new TestCallback());
-    }
-
-/*
-    private void testAddGateway() {
-        Group g = topoModel.getGroupById("group-6");
-        Service svc = new Service();
-        svc.setManagementPort(28085);
-        svc.setHostID("host-1");
-        svc.setEnabled(true);
-        svc.setName("New Gateway");
-        svc.setScheme("HTTPS");
-        svc.setType(Topology.ServiceType.gateway);
-        topoModel.addGateway(g, svc, 28080, new PostCallback());
-    }
-*/
 
     private void confirmStartGateway(final String instId, final boolean start) {
         String a = (start ? "start" : "stop");
@@ -506,61 +415,49 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
     }
 
     private void performRemoveGateway(final String instId) {
-        showProgress(true);
-        Group grp = topoModel.getInstanceGroup(instId);
-        if (grp != null && grp.getServices().size() == 1) {
-            orphanedGroup = grp;
-        }
+        showProgressBar(true);
+        Log.d(TAG, String.format("performRemoveGateway: %s", instId));
+//        Group grp = topoModel.getInstanceGroup(instId);
+//        if (grp != null && grp.getServices().size() == 1) {
+//            orphanedGroup = grp;
+//        }
         topoModel.removeGateway(instId, true, new DeleteSvcCallback(instId));
     }
 
-    @Override
-    public Loader<Topology> onCreateLoader(int i, Bundle bundle) {
-        Log.d(TAG, String.format("onCreateLoader: %d", i));
-        if (i == TOPO_LOADER) {
-            topoModel.reset();
-            return new TopologyLoader(this, app.getApiClient());
-        }
-        return null;
-    }
-
-    @Override
-    public void onLoadFinished(Loader<Topology> loader, Topology o) {
-        topoModel.setTopology(o);
-        Log.d(TAG, String.format("onLoadFinished: %d", loader.getId()));
-        postMessage(MSG_LOADER_FINISHED, loader.getId());
-    }
-
-    @Override
-    public void onLoaderReset(Loader<Topology> loader) {
-        Log.d(TAG, String.format("onLoaderReset: %d", loader.getId()));
-    }
-
     private void onTopologyLoaded() {
+        Log.d(TAG, "onTopologyLoaded");
         if (topoModel.getTopology() == null) {
             ServerInfo svr = app.getCurrentServer();
             finishWithAlert(String.format("Could not load topology. Is %s available?", svr == null ? "Node Manager" : svr.displayString()));
             return;
         }
-
-        orphanedGroup = null;
-        deployModel.getDeploymentDetails(new DdCallback());
+        if (deployModel.hasLoaded()) {
+            onDetailsLoaded();
+            return;
+        }
+        deployModel.loadDeploymentDetails(new DdCallback());
     }
 
     private void onDetailsLoaded() {
+        Log.d(TAG, "onDetailsLoaded");
         replaceFragment(ctr01.getId(), TopologyFragment.newInstance(), "topo");
         Topology t = topoModel.getTopology();
         Collection<Service> svcs = t.getServices(Topology.ServiceType.gateway);
         for (Service s: svcs) {
             topoModel.getGatewayStatus(s.getId(), new GatewayActionCallback(s.getId(), "status"));
         }
-        showProgress(false);
+        swipeRefresh.setRefreshing(false);
+        showProgressBar(false);
     }
 
     private void updateStatus(String sid, int stat) {
-        Log.d(TAG, String.format("updateStatus %s: %d", sid, stat));
-        if (topoModel != null)
-            topoModel.setGatewayStatus(sid, stat);
+        topoModel.setGatewayStatus(sid, stat);
+        if (stat != TopologyModel.GATEWAY_STATUS_RUNNING) {
+            topoModel.clearSvcConfig(sid);
+        }
+        if (isVisible()) {
+            Log.d(TAG, String.format("updateStatus %s: %d", sid, stat));
+        }
     }
 
     private class GatewayActionCallback extends BaseCallback {
@@ -577,7 +474,7 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
         @Override
         protected void onSuccessResponse(int code, String msg, String body) {
             int stat = TopologyModel.GATEWAY_STATUS_UNKNOWN;
-            JsonObject j = JsonHelper.getInstance().parseAsObject(body);
+            JsonObject j = jsonHelper.parseAsObject(body);
             if (j != null && j.has("result")) {
                 final String s = j.get("result").getAsString();
                 stat = TopologyModel.parseStatus(s);
@@ -587,17 +484,17 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
         }
     }
 
-    private void onDeleted(String id) {
+    private void onSvcDeleted(String id) {
         showToast(String.format("%s deleted", id));
-        if (orphanedGroup != null) {
-            confirmDialog(String.format("Delete empty group %s", orphanedGroup.getName()), new DialogInterface.OnClickListener() {
+        final Group og = topoModel.getOrphanedGroup();
+        if (og != null) {
+            confirmDialog(String.format("Delete empty group %s", og.getName()), new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialogInterface, int i) {
-                    topoModel.removeGroup(orphanedGroup, new BaseCallback() {
+                    topoModel.removeGroup(og, new BaseCallback() {
                         @Override
                         protected void onSuccessResponse(int code, String msg, String body) {
-                            showToast(String.format("%s deleted", orphanedGroup.getName()));
-                            orphanedGroup = null;
+                            showToast(String.format("%s deleted", og.getName()));
                             refresh();
                         }
                     });
@@ -619,7 +516,7 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
 
         @Override
         protected void onSuccessResponse(int code, String msg, String body) {
-            onDeleted(sid);
+            onSvcDeleted(sid);
         }
     }
 
@@ -634,6 +531,7 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
 
         }
     }
+
 
     private class DdCallback extends BaseCallback {
 
@@ -651,7 +549,7 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
 
         @Override
         protected void onSuccessResponse(int code, String msg, String body) {
-            JsonObject j = JsonHelper.getInstance().parseAsObject(body);
+            JsonObject j = jsonHelper.parseAsObject(body);
             if (j == null)
                 return;
             if (j.has(JsonHelper.PROP_RESULT))
@@ -664,13 +562,69 @@ public class TopologyActivity extends BaseActivity implements LoaderManager.Load
         }
     }
 
+    private class TopoCallback extends BaseCallback {
+
+        @Override
+        protected void onSuccessResponse(int code, String msg, String body) {
+            JsonObject obj = jsonHelper.parseAsObject(body);
+            if (obj != null && obj.has("result")) {
+                obj = obj.getAsJsonObject("result");
+            }
+            topoModel.setTopology(jsonHelper.topologyFromJson(obj));
+            onTopologyLoaded();
+        }
+    }
+
+/*
     @Override
-    protected void showProgress(final boolean show) {
+    protected void showSwipeRefresh(final boolean show) {
+        Log.d(TAG, String.format("showSwipeRefresh: %s", show));
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                swipeRefresh.setRefreshing(show);
+                boolean do_it = false;
+                if (show) {
+                    do_it = (!swipeRefresh.isRefreshing());
+                }
+                else {
+                    do_it = swipeRefresh.isRefreshing();
+                }
+                if (do_it) {
+                    Log.d(TAG, "swipeRefresh toggled");
+                    swipeRefresh.setRefreshing(show);
+                }
             }
         });
     }
+
+    @Subscribe
+    public void onCertValidationEvent(CertValidationEvent evt) {  //final CertPath cp, final String alias) {
+        final CertPath cp = evt.cp;
+        final String alias = evt.alias;
+        StringBuilder sb = new StringBuilder();
+        int i = 0;
+        for (Certificate c : cp.getCertificates()) {
+            if (c.getType().equals("X.509")) {
+                X509Certificate c509 = (X509Certificate) c;
+                sb.append("[").append(++i).append("]: ").append(c509.getSubjectDN().toString()).append("\n");
+            }
+        }
+        sb.append("\n").append(getString(R.string.add_to_truststore));
+
+        confirmDialog(getString(R.string.cert_not_trusted), sb.toString(), new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                BaseApp.keystoreManager().addTrustedCert(alias, cp);
+                showToast("Cert trusted " + alias);
+                resetClient();
+                refresh();
+            }
+        }, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                showToast("Cancelled");
+            }
+        });
+    }
+*/
 }

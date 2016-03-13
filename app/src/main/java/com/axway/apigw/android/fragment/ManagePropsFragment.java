@@ -21,9 +21,12 @@ import com.axway.apigw.android.ValidationException;
 import com.axway.apigw.android.activity.BaseActivity;
 import com.axway.apigw.android.adapter.BaseListAdapter;
 import com.axway.apigw.android.event.ItemSelectedEvent;
+import com.axway.apigw.android.model.ObservableJsonObject;
 import com.axway.apigw.android.util.NameValuePair;
 import com.axway.apigw.android.view.BasicViewHolder;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,15 +38,18 @@ import java.util.Set;
  */
 public class ManagePropsFragment extends EditFrag<JsonObject> implements AdapterView.OnItemClickListener {
 
-    private List<NameValuePair> list;
+//    private List<NameValuePair> list;
     public ListView listView;
+    private JoAdapter adapter;
+    private ObservableJsonObject observable;
 
-    public static ManagePropsFragment newInstance(JsonObject j) {
+    public static ManagePropsFragment newInstance(ObservableJsonObject j) {
         ManagePropsFragment rv = new ManagePropsFragment();
-        if (j == null)
-            rv.list = new ArrayList<>();
-        else
-            rv.list = JsonHelper.getInstance().toNameValuePairs(j);
+        rv.observable = j;
+//        if (j.jsonObject() == null)
+//            rv.list = new ArrayList<>();
+//        else
+//            rv.list = JsonHelper.getInstance().toNameValuePairs(j.jsonObject());
         return rv;
     }
 
@@ -58,7 +64,8 @@ public class ManagePropsFragment extends EditFrag<JsonObject> implements Adapter
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        listView.setAdapter(new PropsAdapter(getActivity(), list));
+        adapter = new JoAdapter(observable.jsonObject());
+        listView.setAdapter(adapter);
         listView.setOnItemClickListener(this);
     }
 
@@ -80,15 +87,15 @@ public class ManagePropsFragment extends EditFrag<JsonObject> implements Adapter
     @Override
     public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
         BasicViewHolder vh = (BasicViewHolder)view.getTag();
-        NameValuePair item = (NameValuePair)vh.getData();
-//        BaseApp.post(new ItemSelectedEvent<NameValuePair>(item));
+        Map.Entry<String, JsonElement> item = (Map.Entry<String, JsonElement>)vh.getData();
+//        BaseApp.postEvent(new ItemSelectedEvent<NameValuePair>(item));
         editItem(item);
     }
 
-    private void editItem(final NameValuePair item) {
+    private void editItem(final Map.Entry<String, JsonElement> item) {
 //        final NameValuePair item = evt.data;
         final BaseActivity ba = (BaseActivity)getActivity();
-        String title = String.format("Edit %s", item.name);
+        String title = String.format("Edit %s", item.getKey());
         ba.customDialog(title, R.layout.name_dlg, new BaseActivity.CustomDialogCallback() {
             @Override
             public void populate(AlertDialog dlg) {
@@ -96,7 +103,7 @@ public class ManagePropsFragment extends EditFrag<JsonObject> implements Adapter
                 EditText ed = (EditText) dlg.findViewById(R.id.edit_name);
 //              txt.setText(item.name);
                 txt.setVisibility(View.GONE);
-                ed.setText(item.value);
+                ed.setText(item.getValue().getAsString());
             }
 
             @Override
@@ -104,10 +111,14 @@ public class ManagePropsFragment extends EditFrag<JsonObject> implements Adapter
                 TextView txt = (TextView) dlg.findViewById(R.id.label_name);
                 EditText ed = (EditText) dlg.findViewById(R.id.edit_name);
                 String s = ed.getText().toString();
-                if (!s.equals(item.value)) {
-                    item.value = s;
-                    setDirty(true);
-                }
+//                JsonPrimitive jp = item.getValue().getAsJsonPrimitive();
+
+                observable.setProperty(item.getKey(), s);
+                adapter.notifyDataSetChanged();
+//                if (!s.equals(item.value)) {
+//                    item.value = s;
+//                    setDirty(true);
+//                }
 //                performDestAction(R.id.action_add, k, s);
             }
 
@@ -122,8 +133,62 @@ public class ManagePropsFragment extends EditFrag<JsonObject> implements Adapter
                 return true;
             }
         });
-
     }
+
+    private class JoAdapter extends BaseAdapter {
+
+        private JsonObject jo;
+        private List<Map.Entry<String, JsonElement>> entries;
+
+        public JoAdapter(JsonObject j) {
+            super();
+            entries = null;
+            jo = j;
+            if (jo != null) {
+                entries = new ArrayList<>();
+                for (Map.Entry<String, JsonElement> e: jo.entrySet()) {
+                    entries.add(e);
+                }
+            }
+        }
+
+        @Override
+        public int getCount() {
+            if (entries == null)
+                return 0;
+            return entries.size();
+        }
+
+        @Override
+        public Object getItem(int position) {
+            if (entries == null)
+                return null;
+            return entries.get(position);
+        }
+
+        @Override
+        public long getItemId(int position) {
+            return position;
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            Map.Entry<String, JsonElement> e = (Map.Entry<String, JsonElement>)getItem(position);
+            if (e == null)
+                return convertView;
+            if (convertView == null) {
+                convertView = View.inflate(getActivity(), android.R.layout.simple_list_item_1, null);
+                convertView.setTag(new BasicViewHolder(convertView));
+            }
+            BasicViewHolder vh = (BasicViewHolder)convertView.getTag();
+            vh.hideImage()
+                    .setText1(String.format("%s: %s", e.getKey(), e.getValue().getAsString()))
+                    .setData(e);
+            return convertView;
+        }
+    }
+
+/*
     private class PropsAdapter extends BaseListAdapter<NameValuePair> {
 
         public PropsAdapter(Context ctx, List<NameValuePair> list) {
@@ -143,25 +208,6 @@ public class ManagePropsFragment extends EditFrag<JsonObject> implements Adapter
             super.viewCreated(view);
             view.setTag(new BasicViewHolder(view));
         }
-
-        /*
-        @Override
-        public View getView(int i, View view, ViewGroup viewGroup) {
-            BasicViewHolder vh;
-            if (view == null) {
-                view = View.inflate(getActivity(), R.layout.listitem_1, null);
-                vh = new BasicViewHolder(view);
-                view.setTag(vh);
-            }
-            else {
-                vh = (BasicViewHolder)view.getTag();
-            }
-            Entry e = (Entry)getItem(i);
-            vh.hideImage()
-                .setText1(String.format("%s: %s", e.name, e.val))
-                .setData(e);
-            return view;
-        }
-*/
     }
+*/
 }

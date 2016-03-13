@@ -5,6 +5,7 @@ import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -18,11 +19,14 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.Toast;
+import android.widget.Toolbar;
 
 import com.axway.apigw.android.BaseApp;
 import com.axway.apigw.android.Constants;
+import com.axway.apigw.android.JsonHelper;
 import com.axway.apigw.android.R;
 import com.axway.apigw.android.fragment.ProgressFragment;
+import com.axway.apigw.android.view.FloatingActionButton;
 
 import java.io.IOException;
 
@@ -30,7 +34,7 @@ import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Response;
 
-public class BaseActivity extends AppCompatActivity implements OnClickListener {
+public class BaseActivity extends AppCompatActivity implements OnClickListener, FloatingActionButton.ClickedListener {
 	private static final String TAG = BaseActivity.class.getSimpleName();
 	
 	protected static final String TAG_PROG_DLG = "progDlg";
@@ -39,6 +43,20 @@ public class BaseActivity extends AppCompatActivity implements OnClickListener {
 	protected static final String TAG_CONFIRM_DLG = "confirmDlg";
 
     protected static final int FRAG_TRANSITION = FragmentTransaction.TRANSIT_FRAGMENT_FADE;
+
+    protected void postEvent(final Object evt) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                BaseApp.post(evt);
+            }
+        });
+    }
+
+    @Override
+    public void onClicked(FloatingActionButton fab) {
+        Log.d(TAG, "fab clicked");
+    }
 
     public interface CustomDialogCallback {
         public void populate(AlertDialog dlg);
@@ -51,9 +69,13 @@ public class BaseActivity extends AppCompatActivity implements OnClickListener {
     private Handler handler;
 //    private Bundle safeExtras;
     private ProgressBar progressBar;
+    private Toolbar toolbar;
+    private FloatingActionButton fab;
 
     private boolean fromSavedState;
     protected BaseApp app;
+    protected JsonHelper jsonHelper;
+    private boolean visible;
 
 /*
 	public BaseActivity() {
@@ -73,6 +95,7 @@ public class BaseActivity extends AppCompatActivity implements OnClickListener {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         app = BaseApp.getInstance();
+        jsonHelper = JsonHelper.getInstance();
         fromSavedState = (savedInstanceState != null);
         if (!fromSavedState) {
 //            if (getIntent() != null) {
@@ -81,6 +104,32 @@ public class BaseActivity extends AppCompatActivity implements OnClickListener {
 //                    getSafeExtras().putAll(getIntent().getExtras());
 //                }
 //            }
+        }
+    }
+
+    @Override
+    public void setContentView(int layoutResID) {
+        super.setContentView(layoutResID);
+        toolbar = (Toolbar)findViewById(R.id.toolbar);
+        if (toolbar != null) {
+            Log.d(TAG, "toolbar found, configuring");
+            setupToolbar(toolbar);
+            setActionBar(toolbar);
+        }
+        fab = (FloatingActionButton)findViewById(R.id.fab01);
+        if (fab != null) {
+            fab.setClickedListener(this);
+            setupFab(fab);
+        }
+    }
+
+    protected void setupFab(FloatingActionButton f) {
+        //do nothing
+    }
+
+    protected void setupToolbar(Toolbar tb) {
+        if (getIntent().hasExtra(Intent.EXTRA_TITLE)) {
+            toolbar.setTitle(getIntent().getStringExtra(Intent.EXTRA_TITLE));
         }
     }
 
@@ -97,13 +146,26 @@ public class BaseActivity extends AppCompatActivity implements OnClickListener {
 //        if (savedInstanceState != null)
 //            safeExtras = savedInstanceState.getBundle(Constants.EXTRA_EXTRAS);
     }
-/*
-    public AgreeApp getAgreeApp() {
-        if (app == null)
-            app = (AgreeApp)getApplication();
-        return app;
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        visible = false;
     }
-*/
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        visible = true;
+    }
+
+    /*
+        public AgreeApp getAgreeApp() {
+            if (app == null)
+                app = (AgreeApp)getApplication();
+            return app;
+        }
+    */
     protected SharedPreferences getPrefs() {
 		if (prefs == null)
 			prefs = PreferenceManager.getDefaultSharedPreferences(this);
@@ -337,6 +399,10 @@ public class BaseActivity extends AppCompatActivity implements OnClickListener {
 //        return (BaseApplication)getApp();
 //    }
 
+    protected void replaceFragment(int ctrId, android.support.v4.app.Fragment frag, String tag) {
+        getSupportFragmentManager().beginTransaction().replace(ctrId, frag, tag).commit();
+    }
+
     protected void replaceFragment(int ctrId, Fragment frag, String tag) {
         getFragmentManager().beginTransaction().replace(ctrId, frag, tag).setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE).commit();
     }
@@ -529,15 +595,23 @@ public class BaseActivity extends AppCompatActivity implements OnClickListener {
 
     protected abstract class BaseCallback implements Callback {
         @Override
-        public void onFailure(Call call, IOException e) {
+        public void onFailure(Call call, final IOException e) {
             showProgress(false);
             Log.e(TAG, String.format("call failed: %s", call), e);
-            showToast(String.format("%s", e.getMessage()));
+//            if (isVisible()) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        showToast(String.format("%s", e.getMessage()));
+                    }
+                });
+//            }
         }
 
         @Override
         public void onResponse(final Call call, final Response response) throws IOException {
             if (response.isSuccessful()) {
+                Log.d(TAG, String.format("success: %s", response));
                 showProgress(false);
                 final String body = response.body().string();
                 response.body().close();
@@ -554,5 +628,15 @@ public class BaseActivity extends AppCompatActivity implements OnClickListener {
         }
 
         abstract protected void onSuccessResponse(int code, String msg, String body);
+    }
+
+    protected boolean isVisible() {
+        return visible;
+    }
+
+    protected void setFabVisibility(int v) {
+        if (fab == null)
+            return;
+        fab.setVisibility(v);
     }
 }

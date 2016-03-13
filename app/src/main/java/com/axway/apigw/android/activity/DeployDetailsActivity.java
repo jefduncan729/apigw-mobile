@@ -55,7 +55,7 @@ import okhttp3.Response;
 /**
  * Created by su on 2/26/2016.
  */
-public class DeployDetailsActivity extends BaseDriveActivity implements FloatingActionButton.ClickedListener {
+public class DeployDetailsActivity extends BaseDriveActivity {
     public static final String TAG = DeployDetailsActivity.class.getSimpleName();
 
     String instId;
@@ -64,16 +64,10 @@ public class DeployDetailsActivity extends BaseDriveActivity implements Floating
     DeploymentDetails deployDtls;
 
     DeploymentModel deployModel = DeploymentModel.getInstance();
-//    TopologyModel topoModel = TopologyModel.getInstance();
 
     private UploadTask uploadTask;
     private FileDetails curDtls;
     private PopupMenu archiveMenu;
-
-    @Nullable
-    @Bind(R.id.fab01) FloatingActionButton fab;
-    @Nullable
-    @Bind(R.id.toolbar) Toolbar toolbar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -85,19 +79,13 @@ public class DeployDetailsActivity extends BaseDriveActivity implements Floating
         instId = args.getString(Constants.EXTRA_INSTANCE_ID);
         deployDtls = deployModel.getDeploymentDetails(instId);
         archiveId = (deployDtls == null ? null : deployDtls.getId());
-        final JsonObject j = JsonHelper.getInstance().parseAsObject(getPrefs().getString(Constants.KEY_DEPLOY_FOLDER, null));
+        final JsonObject j = jsonHelper.parseAsObject(getPrefs().getString(Constants.KEY_DEPLOY_FOLDER, null));
         if (j == null) {
             Log.d(TAG, String.format("error parsing folder info: %s", Constants.KEY_DEPLOY_FOLDER));
             folderId = null;
         }
         else {
             folderId = j.get("id").getAsString();
-        }
-        if (fab != null)
-            setupFab(fab);
-        if (toolbar != null){
-            setupToolbar(toolbar);
-            setActionBar(toolbar);
         }
         getSupportFragmentManager().beginTransaction().replace(R.id.container01, DeployDetailsFragment.newInstance(deployDtls), Constants.TAG_SINGLE_PANE).commit();
     }
@@ -115,7 +103,6 @@ public class DeployDetailsActivity extends BaseDriveActivity implements Floating
 
 //    @Override
     protected void setupFab(FloatingActionButton fab) {
-        fab.setClickedListener(this);
         fab.setImageResource(R.drawable.upload_fab);
         fab.setVisibility(View.VISIBLE);
     }
@@ -166,6 +153,7 @@ public class DeployDetailsActivity extends BaseDriveActivity implements Floating
     @Subscribe
     public void onPropsSelected(ItemSelectedEvent<DeployDetailsFragment.DeployDtlsAdapter.Entry> evt) {
         Log.d(TAG, String.format("onPropsSelected: %s", evt));
+/*
         DeployDetailsFragment.DeployDtlsAdapter.Entry e = (DeployDetailsFragment.DeployDtlsAdapter.Entry)evt.data;
         JsonObject props = e.props;
         int k = 0;
@@ -175,10 +163,11 @@ public class DeployDetailsActivity extends BaseDriveActivity implements Floating
             k = R.id.action_policy_props;
         if (k == 0)
             return;
-        Intent i = new Intent(this, ManagePropsActivity.class);
+        Intent i = new Intent(this, EditItemActivity.class);
         i.putExtra(Constants.EXTRA_INSTANCE_ID, instId);
         i.putExtra(Constants.EXTRA_ITEM_TYPE, k);
         startActivity(i);
+*/
 /*
 //        DeploymentDetails.Props props = e.props;
         JsonObject props = e.props;

@@ -106,7 +106,7 @@ public class KpsStoresAdapter extends BaseAdapter {
     public View getView(int pos, View view, ViewGroup parent) {
         Entry e = (Entry)getItem(pos);
         if (e == null) {
-            return null;
+            return view;
         }
         BasicViewHolder holder = (view == null ? null : (BasicViewHolder)view.getTag());
         if (view == null || (holder != null && holder.getViewType() != e.type)) {

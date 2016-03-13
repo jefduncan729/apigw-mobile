@@ -53,7 +53,7 @@ public class ConnMgrEditActivity extends EditActivity<ServerInfo> {
     }
 
     @Override
-    public void save() {
+    public void onSave() {
         try {
             editFrag.validate();
             Bundle extras = new Bundle();
@@ -154,13 +154,9 @@ public class ConnMgrEditActivity extends EditActivity<ServerInfo> {
         getContentResolver().update(uri, values, null, null);
     }
 
-    private void requestFailed(Call call, IOException e) {
-        showToast(e.getMessage());
-    }
-
     @Override
     protected void setupToolbar(Toolbar toolbar) {
-        super.setupToolbar(toolbar);
+//        super.setupToolbar(toolbar);
         toolbar.setTitle(String.format("%s Connection", (isInsert ? "Add" : "Edit")));
         if (!isInsert)
             toolbar.setSubtitle(item.displayString());
@@ -168,38 +164,21 @@ public class ConnMgrEditActivity extends EditActivity<ServerInfo> {
 
     private void checkCert(final ServerInfo info) {
         final ApiClient client = ApiClient.from(info);
-        client.checkCert(new Callback() {
+        client.checkCert(new BaseCallback() {
             @Override
             public void onFailure(final Call call, final IOException e) {
                 final CertPath cp = BaseApp.certPathFromThrowable(e);
                 if (cp == null) {
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            requestFailed(call, e);
-                        }
-                    });
+                    super.onFailure(call, e);
                 }
                 else {
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            BaseApp.post(new CertValidationEvent(info, cp));
-                        }
-                    });
+                    postEvent(new CertValidationEvent(info, cp));
                 }
             }
 
             @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                if (response.isSuccessful()) {
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            certAlreadyTrusted(info);
-                        }
-                    });
-                }
+            protected void onSuccessResponse(int code, String msg, String body) {
+                certAlreadyTrusted(info);
             }
         });
     }

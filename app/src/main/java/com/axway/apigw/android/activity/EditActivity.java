@@ -12,15 +12,14 @@ import com.axway.apigw.android.BaseApp;
 import com.axway.apigw.android.Constants;
 import com.axway.apigw.android.R;
 import com.axway.apigw.android.ValidationException;
-import com.axway.apigw.android.event.NotifyChangeEvent;
 import com.axway.apigw.android.fragment.EditFrag;
-import com.squareup.otto.Subscribe;
 
 /**
  * Created by su on 2/10/2016.
  */
 abstract public class EditActivity<T> extends BaseActivity {
     private static final String TAG = EditActivity.class.getSimpleName();
+
     protected T item;
     protected EditFrag<T> editFrag;
 
@@ -30,16 +29,13 @@ abstract public class EditActivity<T> extends BaseActivity {
     abstract protected T loadItem(Intent intent);
     abstract protected boolean saveItem(T item, Bundle extras);
 
-    private Toolbar toolbar;
     protected boolean isInsert;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.toolbar_pane);
-        setResult(RESULT_CANCELED);
+
         isInsert = false;
-        toolbar = (Toolbar)findViewById(R.id.toolbar);
         if (Intent.ACTION_INSERT.equals(getIntent().getAction())){
             isInsert = true;
             item = createItem(getIntent());
@@ -49,11 +45,10 @@ abstract public class EditActivity<T> extends BaseActivity {
         }
         Bundle args = (savedInstanceState == null ? getIntent().getExtras() : savedInstanceState);
         editFrag = createFragment(args, item);
-        if (toolbar != null) {
-            setupToolbar(toolbar);
-            setActionBar(toolbar);
-        }
+        setContentView(R.layout.toolbar_pane);
+        setResult(RESULT_CANCELED);
         replaceFragment(R.id.container01, editFrag, Constants.TAG_SINGLE_PANE);
+        invalidateOptionsMenu();
     }
 
     @Override
@@ -64,6 +59,15 @@ abstract public class EditActivity<T> extends BaseActivity {
 
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
+/*
+        Log.d(TAG, "onPrepareOptionsMenu");
+        MenuItem item = menu.findItem(R.id.action_save);
+        if (item != null)
+            item.setVisible(isDirty());
+        item = menu.findItem(R.id.action_cancel);
+        if (item != null)
+            item.setVisible(isDirty());
+*/
         return super.onPrepareOptionsMenu(menu);
     }
 
@@ -72,10 +76,10 @@ abstract public class EditActivity<T> extends BaseActivity {
         int id = item.getItemId();
         switch (id) {
             case R.id.action_save:
-                save();
+                onSave();
                 return true;
             case R.id.action_cancel:
-                cancel();
+                onCancel();
                 return true;
         }
         return super.onOptionsItemSelected(item);
@@ -95,31 +99,26 @@ abstract public class EditActivity<T> extends BaseActivity {
 
     @Override
     public void onBackPressed() {
-        if (editFrag != null && editFrag.isDirty()){
-            confirmDialog("Discard changes?", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialogInterface, int i) {
-                    performCancel();
-                }
-            });
+        if (isDirty()){
+            confirmCancel();
             return;
         }
         super.onBackPressed();
     }
 
-    public Toolbar getToolbar() {
-        return toolbar;
+    protected void confirmCancel() {
+        Log.d(TAG, "ui is dirty");
+        confirmDialog("Discard changes?", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                performCancel();
+            }
+        });
     }
 
-    public void cancel() {
-        if (editFrag != null && editFrag.isDirty()) {
-            Log.d(TAG, "ui is dirty");
-            confirmDialog("Discard changes?", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialogInterface, int i) {
-                    performCancel();
-                }
-            });
+    public void onCancel() {
+        if (isDirty()) {
+            confirmCancel();
             return;
         }
         performCancel();
@@ -132,8 +131,14 @@ abstract public class EditActivity<T> extends BaseActivity {
 
     }
 
-    public void save() {
-        Log.d(TAG, "save");
+    protected boolean isDirty() {
+        if (editFrag == null)
+            return false;
+        return editFrag.isDirty();
+    }
+
+    protected void onSave() {
+        Log.d(TAG, "onSave");
         try {
             editFrag.validate();
             Bundle extras = new Bundle();
@@ -148,12 +153,8 @@ abstract public class EditActivity<T> extends BaseActivity {
         }
     }
 
+    @Override
     protected void setupToolbar(final Toolbar toolbar) {
-        if (getIntent().hasExtra(Intent.EXTRA_TITLE)) {
-            toolbar.setTitle(getIntent().getStringExtra(Intent.EXTRA_TITLE));
-        }
-        else {
-            toolbar.setTitle(String.format("%s", (isInsert ? "Add" : "Edit")));
-        }
+        toolbar.setTitle(String.format("%s", (isInsert ? "Add" : "Edit")));
     }
 }

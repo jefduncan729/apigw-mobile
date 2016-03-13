@@ -117,16 +117,6 @@ public class Constants {
 
     public static final Bundle EMPTY_BUNDLE = new Bundle();
 
-    public static final String ENDPOINT_KPS = "router/service/{svcId}/api/kps";
-    public static final String ENDPOINT_KPS_STORE = "router/service/{svcId}/api/kps/{alias}";
-    public static final String ENDPOINT_KPS_START = ENDPOINT_KPS + "/iterator/start/{alias}";
-    public static final String ENDPOINT_KPS_NEXT = ENDPOINT_KPS + "/iterator/next/{alias}";
-
-//    public static final String ENDPOINT_MQ = "router/service/{svcId}/api/ama";
-//    public static final String ENDPOINT_MQ_DESTS = ENDPOINT_MQ + "/{destType}";
-//    public static final String ENDPOINT_MQ_DESTS = ENDPOINT_MQ + "queues";
-//    public static final String ENDPOINT_MQ_MESSAGES = ENDPOINT_MQ_DESTS + "/{queueName}/messages";
-
     public static final DialogInterface.OnClickListener NOOP_LISTENER = new DialogInterface.OnClickListener() {
         public void onClick(DialogInterface dialog, int whichButton) {
         }

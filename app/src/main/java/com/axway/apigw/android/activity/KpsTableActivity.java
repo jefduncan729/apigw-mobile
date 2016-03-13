@@ -33,7 +33,7 @@ import butterknife.ButterKnife;
 /**
  * Created by su on 2/19/2016.
  */
-public class KpsTableActivity extends BaseActivity implements LoaderManager.LoaderCallbacks<JsonArray>,FloatingActionButton.ClickedListener {
+public class KpsTableActivity extends BaseActivity implements LoaderManager.LoaderCallbacks<JsonArray> {
     public static final String TAG = KpsTableActivity.class.getSimpleName();
 
     public static final int MSG_LOADED = Constants.MSG_BASE + 6001;
@@ -41,8 +41,6 @@ public class KpsTableActivity extends BaseActivity implements LoaderManager.Load
 
     @Bind(R.id.swipe_refresh) SwipeRefreshLayout swipeRefresh;
     @Bind(R.id.container01) ViewGroup ctr01;
-    @Bind(R.id.toolbar) Toolbar toolbar;
-    @Bind(R.id.fab01) FloatingActionButton fab;
 
     private KpsModel model;
     private String instId;
@@ -52,8 +50,6 @@ public class KpsTableActivity extends BaseActivity implements LoaderManager.Load
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.tb_sr_frame);
-        ButterKnife.bind(this);
         if (savedInstanceState == null) {
             instId = getIntent().getExtras().getString(Constants.EXTRA_INSTANCE_ID, null);
             storeId = getIntent().getExtras().getString(Constants.EXTRA_ITEM_ID, null);
@@ -62,16 +58,6 @@ public class KpsTableActivity extends BaseActivity implements LoaderManager.Load
             instId = savedInstanceState.getString(Constants.EXTRA_INSTANCE_ID);
             storeId = savedInstanceState.getString(Constants.EXTRA_ITEM_ID);
         }
-        swipeRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                if (!swipeRefresh.isRefreshing())
-                    swipeRefresh.setRefreshing(true);
-                postEmptyMessage(Constants.MSG_REFRESH);
-            }
-        });
-        fab.setVisibility(View.GONE);
-        fab.setClickedListener(this);
         model = KpsModel.getInstance();
         if (model.getKps() == null) {
             finishWithAlert("KPS has not been loaded");
@@ -82,12 +68,30 @@ public class KpsTableActivity extends BaseActivity implements LoaderManager.Load
             finishWithAlert(String.format("Store not found: %s", storeId));
             return;
         }
+        setContentView(R.layout.tb_sr_frame);
+        ButterKnife.bind(this);
+        swipeRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                if (!swipeRefresh.isRefreshing())
+                    swipeRefresh.setRefreshing(true);
+                postEmptyMessage(Constants.MSG_REFRESH);
+            }
+        });
 //        showProgress(true);
-        toolbar.setTitle(String.format("Browsing %s", store.getAlias()));
-        toolbar.setSubtitle(instId);
-        setActionBar(toolbar);
 //        refresh();
         getSupportLoaderManager().initLoader(0, null, this);
+    }
+
+    @Override
+    protected void setupToolbar(Toolbar tb) {
+        tb.setTitle(String.format("Browsing %s", store.getAlias()));
+        tb.setSubtitle(instId);
+    }
+
+    @Override
+    protected void setupFab(FloatingActionButton f) {
+        f.setVisibility(View.VISIBLE);
     }
 
     @Override
@@ -184,7 +188,7 @@ public class KpsTableActivity extends BaseActivity implements LoaderManager.Load
 
     @Override
     public android.support.v4.content.Loader<JsonArray> onCreateLoader(int id, Bundle args) {
-        String endpoint = KpsModel.KPS_STORE_ENDPOINT.replace("{svcId}", instId).replace("{alias}", store.getAlias());
+        String endpoint = String.format(KpsModel.KPS_STORE_ENDPOINT, instId, store.getAlias());
         return new JsonArrayLoader(this, app.getApiClient(), endpoint);
     }
 
@@ -200,7 +204,6 @@ public class KpsTableActivity extends BaseActivity implements LoaderManager.Load
         String s = getPrefs().getString(String.format("layout_%s", storeId), null);
         DisplayPrefs layout = DisplayPrefs.inflate(s);
         getSupportFragmentManager().beginTransaction().replace(R.id.container01, KpsTableFragment.newInstance(instId, store, layout, data), Constants.TAG_SINGLE_PANE).commit();
-        fab.setVisibility(View.VISIBLE);
     }
 
     @Override

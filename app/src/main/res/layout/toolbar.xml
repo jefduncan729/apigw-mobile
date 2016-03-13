@@ -1,8 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Toolbar xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@id/toolbar"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:elevation="@dimen/action_bar_elevation"
     android:layout_width="match_parent"
-    android:layout_height="?android:attr/actionBarSize"
-    android:background="@mipmap/a5_header_curves"
-    android:logo="@mipmap/ic_axwaylogo">
-</Toolbar>
+    android:layout_height="wrap_content">
+
+    <Toolbar
+        android:id="@id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?android:attr/actionBarSize"
+        style="@style/ActionBar">
+    </Toolbar>
+</LinearLayout>
+    <!--
+    style="@style/ActionBar"
+    android:logo="@mipmap/ic_axwaylogo"
+    android:background="@mipmap/a5_header_curves"-->

@@ -29,16 +29,16 @@ public class DeploymentModel extends ApiModel {
     private static final String ENDPOINT_BASE = "api/deployment/";
     public static final String ENDPOINT_DEPLOYMENT_DETAILS = ENDPOINT_BASE + "domain/deployments";
     public static final String ENDPOINT_ARCHIVE = ENDPOINT_BASE + "archive/";
-    public static final String ENDPOINT_DEPLOYMENT_INST_ARCHIVE = ENDPOINT_ARCHIVE + "service/{svcId}";
-    public static final String ENDPOINT_DEPLOYMENT_INST_POLICY_ARCHIVE = ENDPOINT_ARCHIVE + "policy/service/{svcId}";
-    public static final String ENDPOINT_DEPLOYMENT_INST_ENV_ARCHIVE = ENDPOINT_ARCHIVE + "environment/service/{svcId}";
-    public static final String ENDPOINT_DEPLOYMENT_ARCHIVE = ENDPOINT_ARCHIVE + "group/{grpId}/{archiveId}";
-    public static final String ENDPOINT_DEPLOYMENT_POLICY_ARCHIVE = ENDPOINT_ARCHIVE + "policy/group/{grpId}/{archiveId}";
-    public static final String ENDPOINT_DEPLOYMENT_ENV_ARCHIVE = ENDPOINT_ARCHIVE + "environment/group/{grpId}/{archiveId}";
+    public static final String ENDPOINT_DEPLOYMENT_INST_ARCHIVE = ENDPOINT_ARCHIVE + "service/%s";
+    public static final String ENDPOINT_DEPLOYMENT_INST_POLICY_ARCHIVE = ENDPOINT_ARCHIVE + "policy/service/%s";
+    public static final String ENDPOINT_DEPLOYMENT_INST_ENV_ARCHIVE = ENDPOINT_ARCHIVE + "environment/service/%s";
+    public static final String ENDPOINT_DEPLOYMENT_ARCHIVE = ENDPOINT_ARCHIVE + "group/%s/%s";
+    public static final String ENDPOINT_DEPLOYMENT_POLICY_ARCHIVE = ENDPOINT_ARCHIVE + "policy/group/%s/%s";
+    public static final String ENDPOINT_DEPLOYMENT_ENV_ARCHIVE = ENDPOINT_ARCHIVE + "environment/group/%s/%s";
 
     public static final String ENDPOINT_ENV_SETTINGS = ENDPOINT_BASE + "envsettings/";
-    public static final String ENDPOINT_ENV_SETTINGS_GRP = ENDPOINT_ENV_SETTINGS + "{grpId}/{archiveId}";
-    public static final String ENDPOINT_ENV_SETTINGS_INST = ENDPOINT_ENV_SETTINGS + "{svcId}";
+    public static final String ENDPOINT_ENV_SETTINGS_GRP = ENDPOINT_ENV_SETTINGS + "%s/%s";
+    public static final String ENDPOINT_ENV_SETTINGS_INST = ENDPOINT_ENV_SETTINGS + "%s";
 
     public static final String ENDPOINT_UPLOAD_CFG = ENDPOINT_BASE + "group/configuration/";
     public static final String ENDPOINT_UPLOAD_CFG_FILE = ENDPOINT_BASE + "group/configuration/file/";
@@ -52,7 +52,7 @@ public class DeploymentModel extends ApiModel {
 
     protected DeploymentModel() {
         super();
-        deployDetails = null;
+        reset();
     }
 
     public static DeploymentModel getInstance() {
@@ -67,23 +67,25 @@ public class DeploymentModel extends ApiModel {
         return deployDetails.get(instanceId);
     }
 
-    public Request getDeploymentDetails(Callback cb) {
+    public boolean hasLoaded() {
+        return deployDetails != null;
+    }
+
+    public Request loadDeploymentDetails(Callback cb) {
         assert client != null;
         assert cb != null;
-        deployDetails = null;
         Request req = client.createRequest(ENDPOINT_DEPLOYMENT_DETAILS);
         client.executeAsyncRequest(req, cb);
         return req;
     }
 
     public void setDeploymentDetails(JsonObject json) {
+        reset();
         if (json == null) {
             Log.d(TAG, "setDeploymentDetails: null");
-            deployDetails = null;
             return;
         }
         Log.d(TAG, "setDeploymentDetails: " + json.toString());
-        inconsistentGroups = null;
         Set<Map.Entry<String, JsonElement>> groups = json.entrySet();
         if (groups == null || groups.size() == 0)
             return;
@@ -102,7 +104,7 @@ public class DeploymentModel extends ApiModel {
                 for (Map.Entry<String, JsonElement> se: svcs) {
                     svcId = se.getKey();
                     jsonSvc = se.getValue().getAsJsonObject();
-                    DeploymentDetails dd = JsonHelper.getInstance().deploymentDetailsFromJson(jsonSvc);
+                    DeploymentDetails dd = jsonHelper.deploymentDetailsFromJson(jsonSvc);
                     if (dd != null) {
                         if (prevId != null && !prevId.equals(dd.getId())) {
                             addInconsistentGroup(grpId);
@@ -131,112 +133,112 @@ public class DeploymentModel extends ApiModel {
     public Request getDeploymentArchive(String grpId, String archiveId, Callback cb) {
         assert cb != null;
         assert client != null;
-        Request req = client.createRequest(ENDPOINT_DEPLOYMENT_ARCHIVE.replace("{grpId}", grpId).replace("{archiveId}", archiveId));
+        Request req = client.createRequest(String.format(ENDPOINT_DEPLOYMENT_ARCHIVE, grpId, archiveId));
         client.executeAsyncRequest(req, cb);
         return req;
     }
 
     public Response getDeploymentArchive(String grpId, String archiveId) throws IOException {
         assert client != null;
-        Request req = client.createRequest(ENDPOINT_DEPLOYMENT_ARCHIVE.replace("{grpId}", grpId).replace("{archiveId}", archiveId));
+        Request req = client.createRequest(String.format(ENDPOINT_DEPLOYMENT_ARCHIVE, grpId, archiveId));
         return client.executeRequest(req);
     }
 
     public Request getEnvironmentArchive(String grpId, String archiveId, Callback cb) {
         assert cb != null;
         assert client != null;
-        Request req = client.createRequest(ENDPOINT_DEPLOYMENT_ENV_ARCHIVE.replace("{grpId}", grpId).replace("{archiveId}", archiveId));
+        Request req = client.createRequest(String.format(ENDPOINT_DEPLOYMENT_ENV_ARCHIVE, grpId, archiveId));
         client.executeAsyncRequest(req, cb);
         return req;
     }
 
     public Response getEnvironmentArchive(String grpId, String archiveId) throws IOException {
         assert client != null;
-        Request req = client.createRequest(ENDPOINT_DEPLOYMENT_ENV_ARCHIVE.replace("{grpId}", grpId).replace("{archiveId}", archiveId));
+        Request req = client.createRequest(String.format(ENDPOINT_DEPLOYMENT_ENV_ARCHIVE, grpId, archiveId));
         return client.executeRequest(req);
     }
 
     public Request getPolicyArchive(String grpId, String archiveId, Callback cb) {
         assert cb != null;
         assert client != null;
-        Request req = client.createRequest(ENDPOINT_DEPLOYMENT_POLICY_ARCHIVE.replace("{grpId}", grpId).replace("{archiveId}", archiveId));
+        Request req = client.createRequest(String.format(ENDPOINT_DEPLOYMENT_POLICY_ARCHIVE, grpId, archiveId));
         client.executeAsyncRequest(req, cb);
         return req;
     }
 
     public Response getPolicyArchive(String grpId, String archiveId) throws IOException {
         assert client != null;
-        Request req = client.createRequest(ENDPOINT_DEPLOYMENT_POLICY_ARCHIVE.replace("{grpId}", grpId).replace("{archiveId}", archiveId));
+        Request req = client.createRequest(String.format(ENDPOINT_DEPLOYMENT_POLICY_ARCHIVE, grpId, archiveId));
         return client.executeRequest(req);
     }
 
     public Request getDeploymentArchiveForService(String instId, Callback cb) {
         assert cb != null;
         assert client != null;
-        Request req = client.createRequest(ENDPOINT_DEPLOYMENT_INST_ARCHIVE.replace("{svcId}", instId));
+        Request req = client.createRequest(String.format(ENDPOINT_DEPLOYMENT_INST_ARCHIVE, instId));
         client.executeAsyncRequest(req, cb);
         return req;
     }
 
     public Response getDeploymentArchiveForService(String instId) throws IOException {
         assert client != null;
-        Request req = client.createRequest(ENDPOINT_DEPLOYMENT_INST_ARCHIVE.replace("{svcId}", instId));
+        Request req = client.createRequest(String.format(ENDPOINT_DEPLOYMENT_INST_ARCHIVE, instId));
         return client.executeRequest(req);
     }
 
     public Request getEnvironmentArchiveForService(String instId, Callback cb) {
         assert cb != null;
         assert client != null;
-        Request req = client.createRequest(ENDPOINT_DEPLOYMENT_INST_ENV_ARCHIVE.replace("{svcId}", instId));
+        Request req = client.createRequest(String.format(ENDPOINT_DEPLOYMENT_INST_ENV_ARCHIVE, instId));
         client.executeAsyncRequest(req, cb);
         return req;
     }
 
     public Response getEnvironmentArchiveForService(String instId) throws IOException {
         assert client != null;
-        Request req = client.createRequest(ENDPOINT_DEPLOYMENT_INST_ENV_ARCHIVE.replace("{svcId}", instId));
+        Request req = client.createRequest(String.format(ENDPOINT_DEPLOYMENT_INST_ENV_ARCHIVE, instId));
         return client.executeRequest(req);
     }
 
     public Request getPolicyArchiveForService(String instId, Callback cb) {
         assert cb != null;
         assert client != null;
-        Request req = client.createRequest(ENDPOINT_DEPLOYMENT_INST_POLICY_ARCHIVE.replace("{svcId}", instId));
+        Request req = client.createRequest(String.format(ENDPOINT_DEPLOYMENT_INST_POLICY_ARCHIVE, instId));
         client.executeAsyncRequest(req, cb);
         return req;
     }
 
     public Response getPolicyArchiveForService(String instId) throws IOException {
         assert client != null;
-        Request req = client.createRequest(ENDPOINT_DEPLOYMENT_INST_POLICY_ARCHIVE.replace("{svcId}", instId));
+        Request req = client.createRequest(String.format(ENDPOINT_DEPLOYMENT_INST_POLICY_ARCHIVE, instId));
         return client.executeRequest(req);
     }
 
     public Request getEnvironmentSettings(String grpId, String archiveId, Callback cb) {
         assert cb != null;
         assert client != null;
-        Request req = client.createRequest(ENDPOINT_ENV_SETTINGS_GRP.replace("{grpId}", grpId).replace("{archiveId}", archiveId));
+        Request req = client.createRequest(String.format(ENDPOINT_ENV_SETTINGS_GRP, grpId, archiveId));
         client.executeAsyncRequest(req, cb);
         return req;
     }
 
     public Response getEnvironmentSettings(String grpId, String archiveId) throws IOException {
         assert client != null;
-        Request req = client.createRequest(ENDPOINT_ENV_SETTINGS_GRP.replace("{grpId}", grpId).replace("{archiveId}", archiveId));
+        Request req = client.createRequest(String.format(ENDPOINT_ENV_SETTINGS_GRP, grpId, archiveId));
         return client.executeRequest(req);
     }
 
     public Request getEnvironmentSettingsForService(String instId, Callback cb) {
         assert cb != null;
         assert client != null;
-        Request req = client.createRequest(ENDPOINT_ENV_SETTINGS_INST.replace("{svcId}", instId));
+        Request req = client.createRequest(String.format(ENDPOINT_ENV_SETTINGS_INST, instId));
         client.executeAsyncRequest(req, cb);
         return req;
     }
 
     public Response getEnvironmentSettingsForService(String instId) throws IOException {
         assert client != null;
-        Request req = client.createRequest(ENDPOINT_ENV_SETTINGS_INST.replace("{svcId}", instId));
+        Request req = client.createRequest(String.format(ENDPOINT_ENV_SETTINGS_INST, instId));
         return client.executeRequest(req);
     }
 
@@ -302,5 +304,11 @@ public class DeploymentModel extends ApiModel {
         Request req = client.createRequest(String.format("%s%s/%s/properties/environment", ENDPOINT_ARCHIVE, grpId, archiveId));
         client.executeAsyncRequest(req, cb);
         return req;
+    }
+
+    public void reset() {
+        Log.d(TAG, "reset");
+        deployDetails = null;
+        inconsistentGroups = null;
     }
 }

@@ -24,8 +24,20 @@ public class Kps {
 
     public Kps() {
         super();
+        reset();
+    }
+
+    public void reset() {
         version = null;
         description = null;
+        if (types != null)
+            types.clear();
+        if (stores != null)
+            stores.clear();
+        if (aliases != null)
+            aliases.clear();
+        if (packages != null)
+            packages.clear();
         types = null;
         stores = null;
         aliases = null;

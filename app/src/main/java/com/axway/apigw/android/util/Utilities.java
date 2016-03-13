@@ -1,5 +1,6 @@
 package com.axway.apigw.android.util;
 
+import android.text.TextUtils;
 import android.util.Log;
 
 import java.io.BufferedReader;
@@ -30,9 +31,7 @@ public class Utilities {
 	private static Boolean androidTestResult = null;
 
 	public static String capitalize(final String input) {
-		if (input == null)
-			return null;
-		if (input.length() == 0)
+		if (TextUtils.isEmpty(input))
 			return input;
 		String[] words = input.split(" ");
 		StringBuilder sb = new StringBuilder();
@@ -417,6 +416,25 @@ public class Utilities {
         excp.printStackTrace(new PrintWriter(sw));
         sb.append("\nFull stack trace:\n").append(sw.toString());
 */
+        return sb.toString();
+    }
+
+	public static String splitCamelCase(String in) {
+        if (TextUtils.isEmpty(in))
+            return in;
+        StringBuilder sb = new StringBuilder();
+        char prevC = '\0';
+        char thisC;
+        for (int i = 0; i < in.length(); i++) {
+            thisC = in.charAt(i);
+            if (Character.isUpperCase(thisC) && !Character.isUpperCase(prevC)) {
+                sb.append(" ");
+            }
+            prevC = thisC;
+            if (i == 0 && Character.isLowerCase(thisC))
+                thisC = Character.toUpperCase(thisC);
+            sb.append(thisC);
+        }
         return sb.toString();
     }
 }

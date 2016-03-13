@@ -98,7 +98,7 @@ public class DriveUploadActivity extends BaseDriveActivity {
             uploadTask.cancel(true);
             uploadTask = null;
         }
-        final JsonObject j = JsonHelper.getInstance().parseAsObject(getPrefs().getString(folderKey, null));
+        final JsonObject j = jsonHelper.parseAsObject(getPrefs().getString(folderKey, null));
         if (j == null) {
             Log.d(TAG, "error parsing folder info: " + folderKey);
             return;
@@ -165,7 +165,7 @@ public class DriveUploadActivity extends BaseDriveActivity {
                     break;
                     case R.id.action_upload:
                         KpsStore store = kpsModel.getStoreById(storeId);
-                        String endpt = KpsModel.KPS_STORE_ENDPOINT.replace("{svcId}", instId).replace("{alias}", store.getAlias());
+                        String endpt = String.format(KpsModel.KPS_STORE_ENDPOINT, instId, store.getAlias());
                         Request req = client.createRequest(endpt);
                         apiResp = client.executeRequest(req);
                     break;

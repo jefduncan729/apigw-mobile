@@ -6,9 +6,13 @@ import android.util.Log;
 
 import com.axway.apigw.android.BaseApp;
 import com.axway.apigw.android.JsonHelper;
+import com.axway.apigw.android.event.RequestTopologyEvent;
 import com.axway.apigw.android.model.DeploymentDetails;
+import com.axway.apigw.android.model.ServiceConfig;
 import com.axway.apigw.android.model.StatusObserver;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.squareup.otto.Subscribe;
 import com.vordel.api.topology.model.Group;
 import com.vordel.api.topology.model.Host;
 import com.vordel.api.topology.model.Service;
@@ -21,6 +25,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Request;
 
@@ -36,21 +41,23 @@ public class TopologyModel extends ApiModel {
     public static final int GATEWAY_STATUS_CHECKING = 3;
 
     public static final String TOPOLOGY_ENDPOINT = "api/topology";
-    public static final String GATEWAY_MGMT_ENDPOINT = "api/management/{action}/{grpId}/{svcId}";
+    public static final String GATEWAY_MGMT_ENDPOINT = "api/management/%s/%s/%s";
 
     public static final String HOSTS_ENDPOINT = TOPOLOGY_ENDPOINT + "/hosts";
     public static final String GROUPS_ENDPOINT = TOPOLOGY_ENDPOINT + "/groups";
     public static final String INSTANCES_ENDPOINT = TOPOLOGY_ENDPOINT + "/services";
+    public static final String OPS_ENDPOINT = "api/router/service/%s/ops";
+    public static final String SVC_CFG_ENDPOINT = OPS_ENDPOINT + "/getserviceconfig?format=json";
 
     private Topology topology;
     private Map<String, Integer> statusCache;
     private Map<String, StatusObserver> statusObservers;
-    private Map<String, DeploymentDetails> deployDetails;
     private static TopologyModel instance = null;
     private static ArrayList<String> hostNames;
     private static ArrayList<String> grpNames;
     protected static Service adminNodeMgr;
-
+    private Group orphanedGroup;
+    private Map<String, ServiceConfig> svcConfig;
 
     protected TopologyModel() {
         super();
@@ -100,8 +107,16 @@ public class TopologyModel extends ApiModel {
 */
 
 //    public void loadTopology(JsonObjectHandler handler) {
-//        topoClient.getTopology(handler);
+//        topoClient.loadTopology(handler);
 //    }
+
+    public Request loadTopology(Callback cb) {
+        assert client != null;
+        assert cb != null;
+        Request req = client.createRequest(TOPOLOGY_ENDPOINT);
+        client.executeAsyncRequest(req, cb);
+        return req;
+    }
 
     public Topology getTopology() {
         return topology;
@@ -130,10 +145,11 @@ public class TopologyModel extends ApiModel {
         topology = null;
         if (statusCache != null)
             statusCache.clear();
-        if (deployDetails != null)
-            deployDetails.clear();
         statusCache = null;
-        deployDetails = null;
+        orphanedGroup = null;
+        if (svcConfig != null)
+            svcConfig.clear();
+        svcConfig = null;
     }
 
     public void addCachedStatus(final String instId, final int status) {
@@ -149,6 +165,66 @@ public class TopologyModel extends ApiModel {
             return statusCache.get(instId);
         return GATEWAY_STATUS_UNKNOWN;
     }
+
+    public void addSvcConfig(String instId, ServiceConfig o) {
+        if (svcConfig == null)
+            svcConfig = new HashMap<>();
+        if (svcConfig.containsKey(instId))
+            svcConfig.remove(instId);
+        svcConfig.put(instId, o);
+    }
+
+    public Request getSvcConfig(String instId, Callback cb) {
+        assert client != null;
+        assert cb != null;
+        Request req = client.createRequest(String.format(SVC_CFG_ENDPOINT, instId));
+        client.executeAsyncRequest(req, cb);
+        return req;
+    }
+
+    public ServiceConfig getSvcConfig(String instId) {
+        if (svcConfig == null)
+            return null;
+        return svcConfig.get(instId);
+    }
+
+    public void clearSvcConfig(String instId) {
+        if (svcConfig == null)
+            return;
+        if (svcConfig.containsKey(instId))
+            svcConfig.remove(instId);
+    }
+
+//    public int getServicesPort(String instId) {
+//        ServiceConfig sc = getSvcConfig(instId);
+//        if (sc == null || !sc.has("processes") || !sc.get("processes").isJsonArray())
+//            return -1;
+//        JsonArray a = sc.get("processes").getAsJsonArray();
+//        JsonArray svcs = null;
+//        for (int i = 0; i < a.size(); i++) {
+//            JsonObject j = a.get(i).getAsJsonObject();
+//            if (j.has("name") && instId.equals(j.get("name").getAsString())) {
+//                svcs = j.getAsJsonArray("httpServices");
+//                break;
+//            }
+//        }
+//        if (svcs == null)
+//            return -1;
+//        JsonArray ports = null;
+//        for (int i = 0; i < svcs.size(); i++) {
+//            JsonObject j = a.get(i).getAsJsonObject();
+//            if (j.has("ports") && j.has("name") && "Default Services".equals(j.get("name").getAsString())) {
+//                ports = j.getAsJsonArray("ports");
+//                break;
+//            }
+//        }
+//        if (ports == null || ports.size() == 0)
+//            return -1;
+//        JsonObject port = null;
+//        if (ports.size() == 1) {
+//            port = ports.get(0).getAsJsonObject();
+//        }
+//    }
 
     public Host getHostById(String id) {
         if (topology == null)
@@ -308,7 +384,7 @@ public class TopologyModel extends ApiModel {
         assert client != null;
         String a = (start ? "start" : "stop");
         Group g = getInstanceGroup(instId);
-        Request req = client.createRequest(GATEWAY_MGMT_ENDPOINT.replace("{svcId}", instId).replace("{action}", a).replace("{grpId}", g.getId()), "POST", null);
+        Request req = client.createRequest(String.format(GATEWAY_MGMT_ENDPOINT, a, g.getId(), instId), "POST", null);
         setGatewayStatus(instId, GATEWAY_STATUS_CHECKING);
         client.executeAsyncRequest(req, cb);
         return req;
@@ -326,14 +402,19 @@ public class TopologyModel extends ApiModel {
         assert client != null;
         setGatewayStatus(instId, GATEWAY_STATUS_CHECKING);
         Group g = getInstanceGroup(instId);
-        Request req = client.createRequest(GATEWAY_MGMT_ENDPOINT.replace("{grpId}", g.getId()).replace("{svcId}", instId).replace("{action}", "status"));
+        Request req = client.createRequest(String.format(GATEWAY_MGMT_ENDPOINT, "status", g.getId(), instId));
         client.executeAsyncRequest(req, cb);
         return req;
     }
 
     public Request removeGateway(String instId, boolean deleteDisk, Callback cb) {
         assert client != null;
+        orphanedGroup = null;
         Group g = getInstanceGroup(instId);
+        if (g != null && g.getServices().size() == 1) {
+            orphanedGroup = g;
+        }
+
         Request req = client.createRequest(String.format("%s/%s/%s?deleteDiskInstance=%s", INSTANCES_ENDPOINT, g.getId(), instId, deleteDisk), "DELETE", null);
         client.executeAsyncRequest(req, cb);
         return req;
@@ -341,7 +422,7 @@ public class TopologyModel extends ApiModel {
 
     public Request addGroup(Group g, Callback cb) {
         assert client != null;
-        JsonObject json = JsonHelper.getInstance().toJson(g);
+        JsonObject json = jsonHelper.toJson(g);
         assert json != null;
         if (json.has("id"))
             json.remove("id");
@@ -359,6 +440,7 @@ public class TopologyModel extends ApiModel {
         assert grp != null;
         Request req = client.createRequest(String.format("%s/%s?deleteDiskGroup=%s", GROUPS_ENDPOINT, grp.getId(), deleteDisk), "DELETE", null);
         client.executeAsyncRequest(req, cb);
+        orphanedGroup = null;
         return req;
     }
 
@@ -382,7 +464,7 @@ public class TopologyModel extends ApiModel {
         assert client != null;
         assert g != null;
         assert svc != null;
-        JsonObject json = JsonHelper.getInstance().toJson(svc);
+        JsonObject json = jsonHelper.toJson(svc);
         if (json.has("id"))
             json.remove("id");
         File p12File = null;
@@ -407,10 +489,14 @@ public class TopologyModel extends ApiModel {
         assert client != null;
         assert svc != null;
         Group g = getInstanceGroup(svc.getId());
-        JsonObject json = JsonHelper.getInstance().toJson(svc);
+        JsonObject json = jsonHelper.toJson(svc);
         Request req = client.createRequest(String.format("%s/%s", INSTANCES_ENDPOINT, g.getId()), "PUT", json);
         client.executeAsyncRequest(req, cb);
         return req;
+    }
+
+    public Group getOrphanedGroup() {
+        return orphanedGroup;
     }
 //
 //    public void loadGatewayStatus(String instId, JsonObjectHandler handler) {

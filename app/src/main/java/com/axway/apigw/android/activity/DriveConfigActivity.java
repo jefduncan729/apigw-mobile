@@ -46,32 +46,24 @@ public class DriveConfigActivity extends BaseDriveActivity implements DriveConfi
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.toolbar_pane);
+        showProgressBar(true);
         if (savedInstanceState == null) {
             Log.d(TAG, "creating model");
             model = new DriveConfigModel();
-        }
-        Toolbar toolbar = (Toolbar)findViewById(R.id.toolbar);
-        if (toolbar != null) {
-            setupToolbar(toolbar);
-            setActionBar(toolbar);
         }
     }
 
     @Override
     protected void setupToolbar(Toolbar tb) {
         String acct = getPrefs().getString(Constants.KEY_GOOGLE_ACCT, "");
-        if (tb == null) {
-            setTitle("Configure Drive Folders");
-        }
-        else {
-            tb.setTitle("Configure Cloud Storage");
-            tb.setSubtitle(String.format("Google Drive: %s", acct));
-        }
+        tb.setTitle("Configure Cloud Storage");
+        tb.setSubtitle(String.format("Google Drive: %s", acct));
     }
 
     private void onModelLoaded() {
         DriveConfigFragment frag = DriveConfigFragment.newInstance(model);
         replaceFragment(R.id.container01, frag, Constants.TAG_SINGLE_PANE);
+        showProgressBar(false);
     }
 
     @Override
@@ -196,6 +188,7 @@ public class DriveConfigActivity extends BaseDriveActivity implements DriveConfi
             getPrefs().edit().putString(key, j.toString()).apply();
             onModelLoaded();
         }
+
         private JsonObject inflateFromPrefs(SharedPreferences prefs, String key) {
             String s = prefs.getString(key, null);
             JsonObject rv = null;
@@ -207,7 +200,7 @@ public class DriveConfigActivity extends BaseDriveActivity implements DriveConfi
                 rv.addProperty("key", key);
             }
             else {
-                rv = JsonHelper.getInstance().parseAsObject(s);
+                rv = jsonHelper.parseAsObject(s);
             }
             return rv;
         }

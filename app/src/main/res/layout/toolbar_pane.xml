@@ -6,6 +6,13 @@
 
     <include layout="@layout/toolbar"/>
 
+<!--
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@android:color/darker_gray" />
+-->
+
     <ProgressBar
         android:id="@android:id/progress"
         android:paddingStart="@dimen/activity_vertical_margin"
@@ -28,26 +35,7 @@
 
         </FrameLayout>
 
-        <com.axway.apigw.android.view.FloatingActionButton
-            android:id="@id/fab01"
-            android:layout_width="@dimen/fab_size"
-            android:layout_height="@dimen/fab_size"
-            android:layout_marginEnd="@dimen/fab_size"
-            android:layout_marginBottom="@dimen/fab_size"
-            android:elevation="@dimen/fab_elevation"
-            android:background="@drawable/fab_bg"
-            android:stateListAnimator="@animator/fab_anim"
-            android:layout_gravity="bottom|end"
-            android:visibility="gone">
+        <include layout="@layout/fab"/>
 
-            <ImageView
-                android:id="@id/fab_img"
-                android:layout_width="@dimen/fab_icon_size"
-                android:layout_height="@dimen/fab_icon_size"
-                android:src="@drawable/fab_icons"
-                android:layout_gravity="center"
-                android:duplicateParentState="true"
-                />
-        </com.axway.apigw.android.view.FloatingActionButton>
     </FrameLayout>
 </LinearLayout>

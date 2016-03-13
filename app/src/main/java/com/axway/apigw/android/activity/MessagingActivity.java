@@ -11,7 +11,6 @@ import android.support.v4.view.ViewPager;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.Toolbar;
 
@@ -19,58 +18,47 @@ import com.axway.apigw.android.BaseApp;
 import com.axway.apigw.android.Constants;
 import com.axway.apigw.android.JsonHelper;
 import com.axway.apigw.android.R;
-import com.axway.apigw.android.api.ApiClient;
 import com.axway.apigw.android.api.MessagingModel;
 import com.axway.apigw.android.event.ActionEvent;
 import com.axway.apigw.android.event.ItemSelectedEvent;
 import com.axway.apigw.android.fragment.MqDestFragment;
 import com.axway.apigw.android.model.MqDestination;
-import com.axway.apigw.android.model.ServerInfo;
 import com.axway.apigw.android.view.FloatingActionButton;
 import com.axway.apigw.android.view.SlidingTabLayout;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.squareup.otto.Subscribe;
 
-import java.io.IOException;
-
 import butterknife.Bind;
 import butterknife.ButterKnife;
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.Request;
-import okhttp3.Response;
 
 /**
  * Created by su on 2/17/2016.
  */
-public class MessagingActivity extends BaseActivity implements ViewPager.OnPageChangeListener, FloatingActionButton.ClickedListener {
+public class MessagingActivity extends BaseActivity implements ViewPager.OnPageChangeListener {
 
     private static final String TAG = MessagingActivity.class.getSimpleName();
     private static final int[] TITLE_IDS = {R.string.queues, R.string.topics, R.string.consumers, R.string.subscribers };
 
     @Bind(R.id.pager_title_strip) SlidingTabLayout slidingTabs;
     @Bind(R.id.view_pager) ViewPager viewPager;
-    @Bind(R.id.toolbar) Toolbar toolbar;
-    @Bind(R.id.fab01) FloatingActionButton fab;
 
-//    private ApiClient client;
     private MessagingModel model;
     private String instId;
     private int curPg;
-    private FragAdapter pageAdapter;
+//    private FragAdapter pageAdapter;
     private String[] titles;
+
+//    private Map<String, Fragment> fragMap;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.toolbar_pager);
         titles = new String[TITLE_IDS.length];
         for (int i = 0; i < TITLE_IDS.length; i++) {
             titles[i] = getString(TITLE_IDS[i]);
         }
-        ButterKnife.bind(this);
-        pageAdapter = new FragAdapter(getSupportFragmentManager());
-        viewPager.setAdapter(pageAdapter);
         if (savedInstanceState == null) {
             instId = getIntent().getExtras().getString(Constants.EXTRA_INSTANCE_ID, null);
             curPg = 0;
@@ -82,19 +70,32 @@ public class MessagingActivity extends BaseActivity implements ViewPager.OnPageC
         if (TextUtils.isEmpty(instId)) {
             throw new IllegalStateException("instId cannot be null");
         }
-//        client = BaseApp.getInstance().getApiClient();
+        setContentView(R.layout.toolbar_pager);
+        ButterKnife.bind(this);
         model = MessagingModel.getInstance();
+//        pageAdapter = new FragAdapter(getSupportFragmentManager());
+//        viewPager.setAdapter(pageAdapter);
+        viewPager.addOnPageChangeListener(this);
         slidingTabs.setCustomTabView(R.layout.tab_view, 0);
         slidingTabs.setBackgroundColor(getResources().getColor(R.color.axway_blue));
         slidingTabs.setDividerColors(getResources().getColor(android.R.color.white));
         slidingTabs.setSelectedIndicatorColors(getResources().getColor(R.color.primary_text_default_material_dark));
-        slidingTabs.setViewPager(viewPager);
-        viewPager.addOnPageChangeListener(this);
-        viewPager.setCurrentItem(curPg);
-        toolbar.setTitle(R.string.action_gateway_messaging);
-        toolbar.setSubtitle(instId);
-        setActionBar(toolbar);
-        fab.setClickedListener(this);
+        if (model.hasLoaded()) {
+            refreshAdapter();
+            return;
+        }
+        loadData();
+    }
+
+    @Override
+    protected void setupToolbar(Toolbar tb) {
+        tb.setTitle(R.string.action_gateway_messaging);
+        tb.setSubtitle(instId);
+    }
+
+    @Override
+    protected void setupFab(FloatingActionButton f) {
+        f.setVisibility(View.VISIBLE);
     }
 
     @Override
@@ -121,13 +122,13 @@ public class MessagingActivity extends BaseActivity implements ViewPager.OnPageC
         final int id = evt.id;
         final Intent data = evt.data;
         String name = data.getStringExtra(Constants.EXTRA_ITEM_NAME);
-        String kind = data.getStringExtra(Constants.EXTRA_ITEM_TYPE);
+        int kind = data.getIntExtra(Constants.EXTRA_ITEM_TYPE, 0);
         confirmDestAction(id, kind, name);
     }
 
     @Subscribe
     public void onItemSelected(ItemSelectedEvent<JsonObject> evt) {
-        if (evt.data == null)
+        if (evt.data == null || !evt.data.has("queueName"))
             return;
         String name = evt.data.get("queueName").getAsString();
         String kind = evt.data.get("queueType").getAsString();
@@ -135,7 +136,7 @@ public class MessagingActivity extends BaseActivity implements ViewPager.OnPageC
         i.setAction(Intent.ACTION_VIEW);
         i.putExtra(Constants.EXTRA_INSTANCE_ID, instId);
         i.putExtra(Constants.EXTRA_ITEM_NAME, name);
-        i.putExtra(Constants.EXTRA_ITEM_TYPE, kind);
+        i.putExtra(Constants.EXTRA_ITEM_TYPE, kind.contains("ueue") ? MessagingModel.TYPE_QUEUE : MessagingModel.TYPE_TOPIC);
         startActivity(i);
     }
 
@@ -147,7 +148,7 @@ public class MessagingActivity extends BaseActivity implements ViewPager.OnPageC
     @Override
     public void onPageSelected(int position) {
         curPg = position;
-        fab.setVisibility(curPg <= 1 ? View.VISIBLE : View.GONE);
+        setFabVisibility(curPg <= 1 ? View.VISIBLE : View.GONE);
     }
 
     @Override
@@ -161,17 +162,11 @@ public class MessagingActivity extends BaseActivity implements ViewPager.OnPageC
     }
 
     private void addDest() {
-        String kind = null;
-        if (curPg == 0) {
-            kind = "Queue";
-        }
-        else if (curPg == 1) {
-            kind = "Topic";
-        }
-        if (TextUtils.isEmpty(kind))
-            return;
-        final String k = kind;
-        String title = String.format("New %s", kind);
+//        String kind = (curPg > 1 ? null : titles[curPg]);
+//        if (TextUtils.isEmpty(kind))
+//            return;
+//        final String k = kind.substring(0, 5);
+        String title = String.format("New %s", curPg == 0 ? "Queue":"Topic");
         customDialog(title, R.layout.name_dlg, new CustomDialogCallback() {
 
             @Override
@@ -183,7 +178,7 @@ public class MessagingActivity extends BaseActivity implements ViewPager.OnPageC
             public void save(AlertDialog dlg) {
                 EditText ed = (EditText) dlg.findViewById(R.id.edit_name);
                 String s = ed.getText().toString();
-                performDestAction(R.id.action_add, k, s);
+                performDestAction(R.id.action_add, curPg + 1, s);
             }
 
             @Override
@@ -200,7 +195,7 @@ public class MessagingActivity extends BaseActivity implements ViewPager.OnPageC
 
     }
 
-    private void confirmDestAction(final int id, final String kind, final String name) {
+    private void confirmDestAction(final int id, final int kind, final String name) {
         String a = null;
         if (id == R.id.action_delete)
             a = "delete";
@@ -216,67 +211,138 @@ public class MessagingActivity extends BaseActivity implements ViewPager.OnPageC
         });
     }
 
-    private void performDestAction(int action, String kind, String name) {
-        if (!kind.endsWith("s"))
-            kind = kind + "s";
-        ApiClient client = app.getApiClient();
-        if (action == R.id.action_add) {
-            String url = String.format("%s/%s", MessagingModel.ENDPOINT_MQ_DESTS.replace("{svcId}", instId).replace("{destType}", kind.toLowerCase()), name);
-            Request req = client.createRequest(url, "PUT", null);
-            client.executeAsyncRequest(req, new PutCallback(kind));
-            return;
-        }
-        if (action == R.id.action_delete) {
-            String url = String.format("%s/%s", MessagingModel.ENDPOINT_MQ_DESTS.replace("{svcId}", instId).replace("{destType}", kind.toLowerCase()), name);
-            Request req = client.createRequest(url, "DELETE", null);
-            client.executeAsyncRequest(req, new DeleteCallback(name));
-            return;
-        }
-        if (action == R.id.action_purge) {
-            String url = String.format("%s/%s/purge", MessagingModel.ENDPOINT_MQ_DESTS.replace("{svcId}", instId).replace("{destType}", kind.toLowerCase()), name);
-            Request req = client.createRequest(url, "POST", null);
-            client.executeAsyncRequest(req, new PurgeCallback(name));
-            return;
+    private void performDestAction(int action, int kind, String name) {
+        showProgressBar(true);
+        switch (action) {
+            case R.id.action_add:
+                model.addDestination(instId, kind, name, new PutCallback(kind));
+            break;
+            case R.id.action_delete:
+                model.removeDestination(instId, kind, name, new DeleteCallback(kind, name));
+            break;
+            case R.id.action_purge:
+                model.purgeDestination(instId, kind, name, new PurgeCallback(name));
+            break;
         }
     }
 
-    private void onRequestFailed(Call call, IOException e) {
-        Log.d(TAG, String.format("RequestFailed: %s, %s", call, e.getMessage()));
+    private void loadData() {
+        showProgressBar(true);
+        model.loadQueues(instId, new LoadCallback(MessagingModel.TYPE_QUEUE));
+        model.loadTopics(instId, new LoadCallback(MessagingModel.TYPE_TOPIC));
+        model.loadConsumers(instId, new LoadCallback(MessagingModel.TYPE_CONSUMER));
+        model.loadSubscribers(instId, new LoadCallback(MessagingModel.TYPE_SUBSCRIBER));
     }
 
-    private void refresh() {
-        int cur = curPg;
-        pageAdapter = new FragAdapter(getSupportFragmentManager());
-        viewPager.setAdapter(pageAdapter);
-        viewPager.setCurrentItem(cur);
+    private void onLoadComplete(int kind, JsonArray data) {
+        switch (kind) {
+            case MessagingModel.TYPE_QUEUE:
+                model.setQueues(data);
+                break;
+            case MessagingModel.TYPE_TOPIC:
+                model.setTopics(data);
+                break;
+            case MessagingModel.TYPE_CONSUMER:
+                model.setConsumers(data);
+                break;
+            case MessagingModel.TYPE_SUBSCRIBER:
+                model.setSubscribers(data);
+                break;
+        }
+        if (model.hasLoaded()) {
+            Log.d(TAG, "onLoadComplete, all data loaded");
+            showProgressBar(false);
+            refreshAdapter();
+        }
+    }
+
+    private class LoadCallback extends BaseCallback {
+
+        int kind;   //innerName;
+        public LoadCallback(int kind) {
+            super();
+            this.kind = kind;
+        }
+
+        public JsonArray filterData(JsonArray in) {
+            if (kind == MessagingModel.TYPE_TOPIC && !BaseApp.getInstance().isShowMqAdvisories()) {
+                JsonArray rv = new JsonArray();
+                for (int i = 0; i < in.size(); i++) {
+                    JsonObject j = in.get(i).getAsJsonObject();
+                    String nm = j.has("queueName") ? j.get("queueName").getAsString() : "";
+                    if (nm.contains("Advisory"))
+                        continue;
+                    rv.add(j);
+                }
+                return rv;
+            }
+            return in;
+        }
+
+        @Override
+        protected void onSuccessResponse(int code, String msg, String body) {
+            JsonArray res = null;
+            String innerName = model.endpointFor(kind);
+            JsonElement json = jsonHelper.parse(body);
+            if (json != null) {
+                if (json.isJsonArray()) {
+                    res = json.getAsJsonArray();
+                }
+                else if (json.isJsonObject() && !TextUtils.isEmpty(innerName)) {
+                    JsonObject jo = json.getAsJsonObject();
+                    if (jo.has(innerName) && jo.get(innerName).isJsonArray())
+                        res = jo.getAsJsonArray(innerName);
+                }
+            }
+            if (res == null)
+                res = new JsonArray();
+            else
+                res = filterData(res);
+            onLoadComplete(kind, res);
+        }
+    }
+
+    private void refreshAdapter() {
+//        pageAdapter = new FragAdapter(getSupportFragmentManager());
+        viewPager.setAdapter(new FragAdapter(getSupportFragmentManager()));
+        viewPager.setCurrentItem(curPg);
+        slidingTabs.setViewPager(viewPager);
     }
 
     private void onPutSuccessful(MqDestination d) {
         showToast(String.format("%s added", d.getName()));
-        refresh();
+        if ("Queue".equals(d.getType()))
+            model.loadQueues(instId, new LoadCallback(MessagingModel.TYPE_QUEUE));
+        else
+            model.loadTopics(instId, new LoadCallback(MessagingModel.TYPE_TOPIC));
     }
 
-    private void onDeleteSuccessful(String name) {
+    private void onDeleteSuccessful(int kind, String name) {
         showToast(String.format("%s deleted", name));
-        refresh();
+        if (kind == MessagingModel.TYPE_QUEUE)
+            model.loadQueues(instId, new LoadCallback(kind));
+        else
+            model.loadTopics(instId, new LoadCallback(kind));
+//        refreshAdapter();
     }
 
     private void onPurgeSuccessful(String name) {
         showToast(String.format("%s purged", name));
+        model.loadQueues(instId, new LoadCallback(MessagingModel.TYPE_QUEUE));
     }
 
     private class PutCallback extends BaseCallback {
 
-        protected String kind;
+        protected int kind;
 
-        protected PutCallback(String kind) {
+        protected PutCallback(int kind) {
             super();
             this.kind = kind;
         }
 
         @Override
         protected void onSuccessResponse(int code, String msg, String body) {
-            MqDestination d = JsonHelper.getInstance().destinationFromJson(body);
+            MqDestination d = jsonHelper.destinationFromJson(body);
             if (d == null) {
                 showToast("request failed");
                 return;
@@ -286,18 +352,19 @@ public class MessagingActivity extends BaseActivity implements ViewPager.OnPageC
     }
 
     private class DeleteCallback extends BaseCallback {
+        int kind;
         String name;
 
-        public DeleteCallback(String name) {
+        public DeleteCallback(int kind, String name) {
             super();
+            this.kind = kind;
             this.name = name;
         }
 
         @Override
         protected void onSuccessResponse(int code, String msg, String body) {
-            onDeleteSuccessful(name);
+            onDeleteSuccessful(kind, name);
         }
-
     }
 
     private class PurgeCallback extends BaseCallback {
@@ -315,6 +382,23 @@ public class MessagingActivity extends BaseActivity implements ViewPager.OnPageC
 
     }
 
+/*
+    private Fragment getFragment(String which) {
+        if (fragMap == null)
+            return null;
+        return fragMap.get(which);
+    }
+
+    private void putFragment(String which, Fragment frag) {
+        if (fragMap == null) {
+            fragMap = new HashMap<>(4);
+        }
+        if (fragMap.containsKey(which))
+            fragMap.remove(which);
+        fragMap.put(which, frag);
+    }
+*/
+
     private class FragAdapter extends FragmentStatePagerAdapter {
 
         public FragAdapter(FragmentManager fm) {
@@ -323,17 +407,24 @@ public class MessagingActivity extends BaseActivity implements ViewPager.OnPageC
 
         @Override
         public Fragment getItem(int position) {
+            JsonArray a = null;
             switch (position) {
                 case 0:
-                    return MqDestFragment.newInstance(instId, "queues");
+                    a = model.getQueues();
+                    break;
                 case 1:
-                    return MqDestFragment.newInstance(instId, "topics");
+                    a = model.getTopics();
+                    break;
                 case 2:
-                    return MqDestFragment.newInstance(instId, "consumers");
+                    a = model.getConsumers();
+                    break;
                 case 3:
-                    return MqDestFragment.newInstance(instId, "subscribers");
+                    a = model.getSubscribers();
+                    break;
             }
-            return null;
+            if (a == null)
+                return null;
+            return MqDestFragment.newInstance(instId, position+1, a);
         }
 
         @Override
@@ -343,14 +434,24 @@ public class MessagingActivity extends BaseActivity implements ViewPager.OnPageC
 
         @Override
         public CharSequence getPageTitle(int position) {
+            int cnt = -1;
             switch (position) {
                 case 0:
+//                    cnt = model.getQueueCount();
+                    break;
                 case 1:
+//                    cnt = topics == null ? -1 : topics.size();
+                    break;
                 case 2:
+//                    cnt = consumers == null ? -1 : consumers.size();
+                    break;
                 case 3:
-                    return titles[position];
+//                    cnt = subscribers == null ? -1 : subscribers.size();
+                    break;
             }
-            return "";
+//            if (cnt == -1)
+            return titles[position];
+//            return String.format("%s (%d)", titles[position], cnt);
         }
 
     }

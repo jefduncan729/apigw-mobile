@@ -17,6 +17,10 @@ import com.axway.apigw.android.BaseApp;
 import com.axway.apigw.android.Constants;
 import com.axway.apigw.android.R;
 import com.axway.apigw.android.adapter.ServerInfoListAdapter;
+import com.axway.apigw.android.api.DeploymentModel;
+import com.axway.apigw.android.api.KpsModel;
+import com.axway.apigw.android.api.MessagingModel;
+import com.axway.apigw.android.api.TopologyModel;
 import com.axway.apigw.android.db.DbHelper;
 import com.axway.apigw.android.event.ActionEvent;
 import com.axway.apigw.android.fragment.HomeFrag;
@@ -37,18 +41,15 @@ public class LauncherActivity extends BaseActivity  {
 
     private static final int REQ_ADD_SERVER = 1001;
     private static final int REQ_SETTINGS = 1002;
+    private static final int REQ_NODEMGR = 1003;
 
     @Bind(R.id.container01) ViewGroup ctr01;
-    @Bind(R.id.toolbar) Toolbar toolbar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.toolbar_pane);
         ButterKnife.bind(this);
-        toolbar.setTitle(R.string.app_name);
-        toolbar.setSubtitle("For Android");
-        setActionBar(toolbar);
         int cnt = getServerCount();
         if (cnt == 0) {
 //            showWelcomeFrag();
@@ -59,6 +60,12 @@ public class LauncherActivity extends BaseActivity  {
         else {
             showHomeFrag();
         }
+    }
+
+    @Override
+    protected void setupToolbar(Toolbar tb) {
+        tb.setTitle(R.string.app_name);
+        tb.setSubtitle("For Android");
     }
 
     @Override
@@ -120,6 +127,13 @@ public class LauncherActivity extends BaseActivity  {
                 showToast("settings changed");
             }
             return;
+        }
+        if (requestCode == REQ_NODEMGR) {
+            Log.d(TAG, "Finished connect activity");
+            TopologyModel.getInstance().reset();
+            DeploymentModel.getInstance().reset();
+            KpsModel.getInstance().reset();
+            MessagingModel.getInstance().reset();
         }
         super.onActivityResult(requestCode, resultCode, data);
     }
@@ -200,7 +214,7 @@ public class LauncherActivity extends BaseActivity  {
         Intent i = new Intent(this, TopologyActivity.class);
         app.setCurrentServer(info);
         i.setAction(Intent.ACTION_VIEW);
-        startActivity(i);
+        startActivityForResult(i, REQ_NODEMGR);
     }
 
     @Subscribe

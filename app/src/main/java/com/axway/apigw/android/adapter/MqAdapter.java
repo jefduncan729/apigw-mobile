@@ -2,10 +2,12 @@ package com.axway.apigw.android.adapter;
 
 import android.content.Context;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 
 import com.axway.apigw.android.JsonHelper;
 import com.axway.apigw.android.R;
+import com.axway.apigw.android.api.MessagingModel;
 import com.axway.apigw.android.model.MqConsumer;
 import com.axway.apigw.android.model.MqDestination;
 import com.axway.apigw.android.model.MqSubscriber;
@@ -17,12 +19,16 @@ import com.google.gson.JsonObject;
  * Created by su on 2/18/2016.
  */
 public class MqAdapter extends JsonArrayAdapter {
+    private static final String TAG = MqAdapter.class.getSimpleName();
 
-    private String kind;
+    private int kind;
+    private JsonHelper jsonHelper;
 
-    public MqAdapter(Context ctx, JsonArray a, String kind) {
+    public MqAdapter(Context ctx, JsonArray a, int kind) {
         super(ctx, a);
         this.kind = kind;
+        jsonHelper = JsonHelper.getInstance();
+        Log.d(TAG, String.format("new MqAdapter: %d", kind));
     }
 
     @Override
@@ -34,24 +40,26 @@ public class MqAdapter extends JsonArrayAdapter {
     protected void populateView(View rv, JsonObject j) {
         BasicViewHolder vh = (BasicViewHolder)rv.getTag();
         vh.getImageView().setVisibility(View.GONE);
-        if ("queues".equals(kind) || "topics".equals(kind)) {
-            MqDestination d = JsonHelper.getInstance().destinationFromJson(j);
+        if (kind == MessagingModel.TYPE_QUEUE || kind == MessagingModel.TYPE_TOPIC) {
+            MqDestination d = jsonHelper.destinationFromJson(j);
             if (d != null) {
 //                vh.setData(d);
                 vh.setText1(String.format("%s (%d)", d.getName(), d.getMsgCount()));
                 vh.setText2(buildDetail(d));
             }
+            return;
         }
-        else if ("subscribers".equals(kind)) {
-            MqSubscriber s = JsonHelper.getInstance().mqSubscriberFromJson(j);
+        if (kind == MessagingModel.TYPE_SUBSCRIBER) {
+            MqSubscriber s = jsonHelper.mqSubscriberFromJson(j);
             if (s != null) {
 //                vh.setData(s);
                 vh.setText1(s.getName());
                 vh.setText2(buildDetail(s));
             }
+            return;
         }
-        else if ("consumers".equals(kind)) {
-            MqConsumer c = JsonHelper.getInstance().mqConsumerFromJson(j);
+        if (kind == MessagingModel.TYPE_CONSUMER) {
+            MqConsumer c = jsonHelper.mqConsumerFromJson(j);
             if (c != null) {
 //                vh.setData(c);
                 vh.setText1(c.getDestName());

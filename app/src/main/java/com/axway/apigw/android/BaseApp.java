@@ -130,7 +130,7 @@ public class BaseApp extends Application {
     }
 
     public static void post(Object evt) {
-        Log.d(TAG, String.format("post: %s", evt));
+        Log.d(TAG, String.format("postEvent: %s", evt));
         bus().post(evt);
     }
 

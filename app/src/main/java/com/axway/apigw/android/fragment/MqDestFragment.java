@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.content.Loader;
+import android.text.TextUtils;
 import android.view.ContextMenu;
 import android.view.MenuItem;
 import android.view.View;
@@ -22,20 +23,30 @@ import com.axway.apigw.android.event.ActionEvent;
 import com.axway.apigw.android.model.MqDestination;
 import com.axway.apigw.android.view.BasicViewHolder;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+
+import java.io.IOException;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.Request;
+import okhttp3.Response;
 
 /**
  * Created by su on 2/18/2016.
  */
 public class MqDestFragment extends JsonArrayFragment {
 
-    private String kind;
+    private int kind;
     private String instId;
+    private JsonArray data;
 
-    public static MqDestFragment newInstance(String instId, String kind) {
+    public static MqDestFragment newInstance(String instId, int kind, JsonArray data) {
         MqDestFragment rv = new MqDestFragment();
         rv.kind = kind;
         rv.instId = instId;
+        rv.data = data;
         return rv;
     }
 
@@ -45,15 +56,14 @@ public class MqDestFragment extends JsonArrayFragment {
     }
 
     @Override
-    public Loader<JsonArray> onCreateLoader(int i, Bundle bundle) {
-        String endpoint = MessagingModel.ENDPOINT_MQ_DESTS.replace("{destType}", kind).replace("{svcId}", instId);
-        return new JsonArrayLoader(getActivity(), BaseApp.getInstance().getApiClient(), endpoint, kind);
+    protected void loadData(Bundle savedState) {
+        onLoadFinished(data);
     }
 
     @Override
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
         super.onCreateContextMenu(menu, v, menuInfo);
-        if ("queues".equals(kind) || "topics".equals(kind)) {
+        if (kind == MessagingModel.TYPE_QUEUE || kind == MessagingModel.TYPE_TOPIC) {
             AdapterView.AdapterContextMenuInfo cmi = (AdapterView.AdapterContextMenuInfo)menuInfo;
             JsonObject o = (JsonObject)getListView().getItemAtPosition(cmi.position);
 //            BasicViewHolder vh = (BasicViewHolder)v.getTag();
@@ -67,7 +77,7 @@ public class MqDestFragment extends JsonArrayFragment {
             iData.putExtra(Constants.EXTRA_ITEM_TYPE, kind);
             iData.putExtra(Constants.EXTRA_ITEM_NAME, d.getName());
             menu.add(0, R.id.action_delete, p++, R.string.action_delete).setIntent(iData);
-            if (kind.equals("queues"))
+            if (kind == MessagingModel.TYPE_QUEUE)
                 menu.add(0, R.id.action_purge, p++, R.string.action_purge).setIntent(iData);
         }
     }

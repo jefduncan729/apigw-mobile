@@ -15,6 +15,7 @@ import com.axway.apigw.android.event.PassphraseEnteredEvent;
 import com.axway.apigw.android.fragment.DomainPassphraseDialog;
 import com.axway.apigw.android.fragment.EditFrag;
 import com.axway.apigw.android.fragment.EditServiceFragment;
+import com.axway.apigw.android.model.ObservableJsonObject;
 import com.google.gson.JsonObject;
 import com.squareup.otto.Subscribe;
 import com.vordel.api.topology.model.Group;
@@ -22,10 +23,12 @@ import com.vordel.api.topology.model.Host;
 import com.vordel.api.topology.model.Service;
 import com.vordel.api.topology.model.Topology;
 
+import java.util.Observable;
+
 /**
  * Created by su on 2/23/2016.
  */
-public class EditServiceActivity extends EditActivity<Service> {
+public class EditServiceActivity extends EditItemActivity<Service> {
 
     private static final String TAG = EditServiceActivity.class.getSimpleName();
 
@@ -34,60 +37,63 @@ public class EditServiceActivity extends EditActivity<Service> {
     boolean addGroup;
     private Bundle extras;
     private TopologyModel model = TopologyModel.getInstance();
+    private ObservableJsonObject observable;
 
     @Override
-    protected EditFrag<Service> createFragment(Bundle args, Service item) {
-        grpId = args.getString(Constants.EXTRA_GROUP_ID);
-        grp = model.getGroupById(grpId);
+    protected EditFrag<Service> createFragment() {
+//        grpId = args.getString(Constants.EXTRA_GROUP_ID);
+//        grp = model.getGroupById(grpId);
 //        grpToAdd = null;
-        return EditServiceFragment.newInstance(grp, item);
+        return EditServiceFragment.newInstance(grp, item, observable);
     }
 
     @Override
-    protected Service createItem(Intent intent) {
-        return new Service();
+    protected void createFromArgs(Bundle args, boolean saved) {
+        grpId = args.getString(Constants.EXTRA_GROUP_ID);
+        if (grp == null)
+            grp = model.getGroupById(grpId);
+        if (isInsert)
+            item = new Service();
+        else
+            item = jsonHelper.serviceFromJson(args.getString(Constants.EXTRA_JSON_ITEM));
     }
 
     @Override
-    protected Service loadItem(Intent intent) {
-        Service svc = JsonHelper.getInstance().serviceFromJson(intent.getStringExtra(Constants.EXTRA_JSON_ITEM));
-        return svc;
+    protected Observable getObservable() {
+        if (observable == null) {
+            JsonObject j = jsonHelper.toJson(item);
+            if (isInsert) {
+                j.addProperty("servicesPort", 0);
+                j.addProperty("caOpts", 0);
+                j.addProperty("signAlg", "sha1");
+            }
+            observable = new ObservableJsonObject(j);
+        }
+        return observable;
     }
 
     @Override
-    public void save() {
-//        super.save();
+    public void performSave() {
         grp = model.getGroupById(grpId);
         addGroup = false;
-        try {
-            editFrag.validate();
-            extras = new Bundle();
-            editFrag.collect(item, extras);
-            if (isInsert) {
-                String gnm = extras.getString(Constants.EXTRA_GROUP_NAME, "");
-                if (grp == null || model.getTopology().getGroupByName(gnm) == null) {
-                    confirmAddGroup(gnm);
-                    return;
-                }
-                if (grp.getName().equals(gnm)) {
-                    addService();
-                    return;
-                }
-                grp = model.getTopology().getGroupByName(gnm);
+        extras = new Bundle();
+        editFrag.collect(item, extras);
+        if (isInsert) {
+            String gnm = extras.getString(Constants.EXTRA_GROUP_NAME, "");
+            if (grp == null || model.getTopology().getGroupByName(gnm) == null) {
+                confirmAddGroup(gnm);
+                return;
+            }
+            if (grp.getName().equals(gnm)) {
                 addService();
+                return;
             }
-            else {
-                updateService();
-            }
+            grp = model.getTopology().getGroupByName(gnm);
+            addService();
         }
-        catch (ValidationException e) {
-            showToast(e.getMessage());
+        else {
+            updateService();
         }
-    }
-
-    @Override
-    protected boolean saveItem(Service item, Bundle extras) {
-        return true;
     }
 
     private void confirmAddGroup(final String nm) {
@@ -188,7 +194,7 @@ public class EditServiceActivity extends EditActivity<Service> {
 
                 @Override
                 protected void onSuccessResponse(int code, String msg, String body) {
-                    JsonObject j = JsonHelper.getInstance().parseAsObject(body);
+                    JsonObject j = jsonHelper.parseAsObject(body);
                     if (j != null) {
                         if (j.has("result"))
                             j = j.get("result").getAsJsonObject();

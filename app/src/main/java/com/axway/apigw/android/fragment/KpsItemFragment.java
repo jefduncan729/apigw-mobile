@@ -1,7 +1,11 @@
 package com.axway.apigw.android.fragment;
 
 import android.os.Bundle;
+import android.text.Editable;
 import android.text.InputType;
+import android.text.TextUtils;
+import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,6 +17,7 @@ import com.axway.apigw.android.R;
 import com.axway.apigw.android.ValidationException;
 import com.axway.apigw.android.model.KpsStore;
 import com.axway.apigw.android.model.KpsType;
+import com.axway.apigw.android.model.ObservableJsonObject;
 import com.axway.apigw.android.view.CheckboxHolder;
 import com.axway.apigw.android.view.LabeledEditHolder;
 import com.google.gson.JsonObject;
@@ -27,19 +32,21 @@ import butterknife.ButterKnife;
 /**
  * Created by su on 2/23/2016.
  */
-public class KpsItemFragment extends EditFrag<JsonObject> {
-
+public class KpsItemFragment extends EditFrag<JsonObject> implements TextWatcher, View.OnClickListener {
+    private static final String TAG = KpsItemFragment.class.getSimpleName();
     private KpsStore kpsStore;
     private KpsType kpsType;
     @Bind(R.id.container01) ViewGroup parentView;
+    private ObservableJsonObject observable;
 
     private Map<String, View> views;
 
-    public static KpsItemFragment newInstance(KpsStore store, KpsType type, JsonObject item) {
+    public static KpsItemFragment newInstance(KpsStore store, KpsType type, ObservableJsonObject item) {
         KpsItemFragment rv = new KpsItemFragment();
         rv.kpsStore = store;
         rv.kpsType = type;
-        rv.item = item;
+        rv.item = item.jsonObject();
+        rv.observable = item;
         return rv;
     }
 
@@ -98,22 +105,24 @@ public class KpsItemFragment extends EditFrag<JsonObject> {
     private View editText(LayoutInflater inflater, String nm) {
         View rv = inflater.inflate(R.layout.edit_text, null);
         LabeledEditHolder vh = new LabeledEditHolder(rv);
-        vh.setViewType(InputType.TYPE_CLASS_TEXT);
         rv.setTag(vh);
-        vh.setLabel(nm);
-        if (item.has(nm))
-            vh.setEditValue(item.get(nm).getAsString());
+        vh.setViewType(InputType.TYPE_CLASS_TEXT)
+            .setLabel(nm)
+            .setData(nm)
+            .setEditValue(observable.getString(nm))  //item.get(nm).getAsString());
+            .setTextWatcher(new FieldWatcher(vh));
         return rv;
     }
 
     private View editNumber(LayoutInflater inflater, String nm, String cls) {
         View rv = inflater.inflate(R.layout.edit_text, null);
         LabeledEditHolder vh = new LabeledEditHolder(rv);
-        vh.setLabel(nm);
-        vh.setViewType(InputType.TYPE_CLASS_NUMBER);
         rv.setTag(vh);
-        if (item.has(nm))
-            vh.setEditValue(String.format("%d", item.get(nm).getAsLong()));
+        vh.setViewType(InputType.TYPE_CLASS_NUMBER)
+            .setLabel(nm)
+            .setData(nm)
+            .setEditValue(String.format("%d", observable.getLong(nm)))
+            .setTextWatcher(new FieldWatcher(vh));
         return rv;
     }
 
@@ -121,10 +130,10 @@ public class KpsItemFragment extends EditFrag<JsonObject> {
         View rv = inflater.inflate(R.layout.checkbox, null);
         CheckboxHolder vh = new CheckboxHolder(rv);
         rv.setTag(vh);
-        vh.setLabel(nm);
-        if (item.has(nm)) {
-            vh.setChecked(item.get(nm).getAsBoolean());
-        }
+        vh.setLabel(nm)
+            .setData(nm)
+            .setChecked(observable.getBoolean(nm))
+            .setListener(this);
         return rv;
     }
 
@@ -143,13 +152,15 @@ public class KpsItemFragment extends EditFrag<JsonObject> {
         if (views == null)
             return;
         for (String nm: views.keySet()) {
-            View v = views.get(nm);
+            View v = getView(nm);
+            if (v == null)
+                continue;
             Object tag = v.getTag();
             if (tag == null)
                 continue;
             if (tag instanceof LabeledEditHolder) {
                 LabeledEditHolder vh = (LabeledEditHolder)tag;
-                if (vh.getViewType() == 1)
+                if (vh.getViewType() == InputType.TYPE_CLASS_TEXT)
                     collectText(vh, nm, item);
                 else
                     collectNumber(vh, nm, item);
@@ -178,22 +189,80 @@ public class KpsItemFragment extends EditFrag<JsonObject> {
 //        EditText e = (EditText)v.findViewById(android.R.id.text1);
 //        if (e == null)
 //            return;
-        if (item.has(nm))
-            item.remove(nm);
-        item.addProperty(nm, vh.getEditValue());
+//        if (item.has(nm))
+//            item.remove(nm);
+//        item.addProperty(nm, vh.getEditValue());
+        if (observable == null)
+            return;
+        observable.setProperty(nm, vh.getEditValue());
     }
 
     private void collectNumber(LabeledEditHolder vh, String nm, JsonObject item) {
-        if (item.has(nm))
-            item.remove(nm);
+        if (observable == null)
+            return;
         long val = Long.parseLong(vh.getEditValue());
-        item.addProperty(nm, val);
+        observable.setProperty(nm, val);
     }
 
     private void collectBoolean(CheckboxHolder vh, String nm, JsonObject item) {
 //        CheckboxHolder vh = (CheckboxHolder)v.getTag();
-        if (item.has(nm))
-            item.remove(nm);
-        item.addProperty(nm, vh.isChecked());
+        if (observable == null)
+            return;
+        observable.setProperty(nm, vh.isChecked());
+    }
+
+    @Override
+    public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+        Log.d(TAG, String.format("beforeTextChanged: %s, %d, %d, %d", s, start, count, after));
+    }
+
+    @Override
+    public void onTextChanged(CharSequence s, int start, int before, int count) {
+        Log.d(TAG, String.format("onTextChanged: %s, %d, %d, %d", s, start, before, count));
+    }
+
+    @Override
+    public void afterTextChanged(Editable s) {
+        Log.d(TAG, String.format("afterTextChanged: %s", s));
+    }
+
+    @Override
+    public void onClick(View v) {
+        Object t = v.getTag();
+        if (t == null)
+            return;
+        if (t instanceof CheckboxHolder) {
+            CheckboxHolder h = (CheckboxHolder)t;
+            observable.setProperty((String)h.getData(), h.isChecked());
+            return;
+        }
+    }
+
+    private class FieldWatcher implements TextWatcher {
+
+        private LabeledEditHolder holder;
+
+        public FieldWatcher(LabeledEditHolder holder) {
+            super();
+            this.holder = holder;
+        }
+
+        @Override
+        public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            //do nothing
+        }
+
+        @Override
+        public void onTextChanged(CharSequence s, int start, int before, int count) {
+            //do nothing
+        }
+
+        @Override
+        public void afterTextChanged(Editable s) {
+            String nm = (String)holder.getData();
+            if (TextUtils.isEmpty(nm))
+                return;
+            observable.setProperty(nm, s.toString());
+        }
     }
 }

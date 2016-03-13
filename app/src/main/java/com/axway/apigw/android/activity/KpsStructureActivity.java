@@ -18,16 +18,13 @@ import butterknife.ButterKnife;
  */
 public class KpsStructureActivity extends BaseActivity {
 
-    @Bind(R.id.toolbar) Toolbar toolbar;
-
     private String instId;
     private String storeId;
+    private String storeAlias;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.toolbar_pane);
-        ButterKnife.bind(this);
         if (savedInstanceState == null) {
             instId = getIntent().getExtras().getString(Constants.EXTRA_INSTANCE_ID, null);
             storeId = getIntent().getExtras().getString(Constants.EXTRA_ITEM_ID, null);
@@ -42,14 +39,21 @@ public class KpsStructureActivity extends BaseActivity {
             finishWithAlert(String.format("KPS store not found: %s", storeId));
             return;
         }
-        toolbar.setTitle(R.string.action_kps_structure);
-        toolbar.setSubtitle(String.format("%s on %s", kpsStore.getAlias(), instId));
+        storeAlias = kpsStore.getAlias();
         KpsType kpsType = KpsModel.getInstance().getTypeById(kpsStore.getTypeId());
         if (kpsType == null) {
             finishWithAlert(String.format("KPS type '%s' not found for store: %s", kpsStore.getTypeId(), storeId));
             return;
         }
+        setContentView(R.layout.toolbar_pane);
+        ButterKnife.bind(this);
         getSupportFragmentManager().beginTransaction().replace(R.id.container01, KpsStructureFragment.newInstance(kpsStore, kpsType)).commit();
+    }
+
+    @Override
+    protected void setupToolbar(Toolbar tb) {
+        tb.setTitle(R.string.action_kps_structure);
+        tb.setSubtitle(String.format("%s on %s", storeAlias, instId));
     }
 
     @Override

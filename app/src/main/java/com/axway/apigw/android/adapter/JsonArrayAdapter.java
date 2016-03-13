@@ -6,6 +6,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 
+import com.axway.apigw.android.JsonHelper;
 import com.axway.apigw.android.view.BasicViewHolder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -17,10 +18,12 @@ abstract public class JsonArrayAdapter extends BaseAdapter {
 
     private JsonArray array;
     protected LayoutInflater inflater;
+    protected JsonHelper jsonHelper;
 
     public JsonArrayAdapter(Context ctx, JsonArray a) {
         super();
         this.array = a;
+        jsonHelper = JsonHelper.getInstance();
         inflater = LayoutInflater.from(ctx);
     }
 

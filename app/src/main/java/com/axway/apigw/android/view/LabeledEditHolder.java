@@ -1,6 +1,7 @@
 package com.axway.apigw.android.view;
 
 import android.text.InputType;
+import android.text.TextWatcher;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -29,6 +30,8 @@ public class LabeledEditHolder {
         viewType = 0;
         label = (TextView) rv.findViewById(labelId);
         edit = (EditText) rv.findViewById(editId);
+        if (edit != null)
+            edit.setTag(this);
         data = null;
     }
 
@@ -36,6 +39,13 @@ public class LabeledEditHolder {
         if (label == null)
             return this;
         label.setText(newVal);
+        return this;
+    }
+
+    public LabeledEditHolder setTextWatcher(TextWatcher w) {
+        if (edit == null)
+            return this;
+        edit.addTextChangedListener(w);
         return this;
     }
 

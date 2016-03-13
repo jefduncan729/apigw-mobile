@@ -33,7 +33,8 @@
     </style>
 
     <style name="ActionBar" parent="android:Widget.Material.ActionBar">
-
+        <item name="android:background">@mipmap/a5_header_curves</item>
+        <item name="android:logo">@mipmap/ic_axwaylogo</item>
     </style>
 
     <style name="ActionBarRed"

@@ -32,7 +32,7 @@ public class DeployDetailsFragment extends ListFragment implements AdapterView.O
 
     public static DeployDetailsFragment newInstance(DeploymentDetails dd) {
         DeployDetailsFragment rv = new DeployDetailsFragment();
-        rv.dd = dd; //DeploymentModel.getInstance().getDeploymentDetails(instId);
+        rv.dd = dd; //DeploymentModel.getInstance().loadDeploymentDetails(instId);
         return rv;
     }
 

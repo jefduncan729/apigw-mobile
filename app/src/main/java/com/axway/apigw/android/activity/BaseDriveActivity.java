@@ -69,10 +69,6 @@ abstract public class BaseDriveActivity extends BaseActivity implements GoogleAp
         acctName = getPrefs().getString(Constants.KEY_GOOGLE_ACCT, null);
     }
 
-    protected void setupToolbar(Toolbar tb) {
-        //do nothing
-    }
-
     protected boolean connectInOnResume() {
         return true;
     }

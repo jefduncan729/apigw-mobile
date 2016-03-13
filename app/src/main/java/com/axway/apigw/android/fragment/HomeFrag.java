@@ -51,7 +51,7 @@ public class HomeFrag extends ListFragment {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.action_settings) {
-            BaseApp.post(new ActionEvent(R.id.action_settings));
+            BaseApp.postEvent(new ActionEvent(R.id.action_settings));
             return true;
         }
         return super.onOptionsItemSelected(item);

@@ -19,24 +19,33 @@ public class MessagesFragment extends JsonArrayFragment {
 
     private String instId;
     private String queueName;
-    private String kind;
+    private JsonArray data;
 
-    public static MessagesFragment newInstance(String instId, String queueName, String kind) {
+    public static MessagesFragment newInstance(String instId, String queueName, JsonArray data) {
         MessagesFragment rv = new MessagesFragment();
+//        rv.msgModel = MessagingModel.getInstance();
         rv.instId = instId;
         rv.queueName = queueName;
-        rv.kind = kind.toLowerCase()+"s";
+        rv.data = data;
+//        rv.kind = kind; //kind.toLowerCase()+"s";
         return rv;
     }
 
     @Override
     protected ListAdapter createAdapter(JsonArray a) {
-        return new MqMsgsAdapter(getActivity(), a, String.format("%s_messages", kind));
+        return new MqMsgsAdapter(getActivity(), a);
     }
+/*
 
     @Override
     public Loader<JsonArray> onCreateLoader(int id, Bundle args) {
-        String endpoint = MessagingModel.ENDPOINT_MQ_MESSAGES.replace("{destType}", kind).replace("{svcId}", instId).replace("{queueName}", queueName);
+        String endpoint = String.format(MessagingModel.ENDPOINT_MQ_MESSAGES, instId, kind, queueName);
         return new JsonArrayLoader(getActivity(), BaseApp.getInstance().getApiClient(), endpoint, "messages");
+    }
+*/
+
+    @Override
+    protected void loadData(Bundle savedState) {
+        onLoadFinished(data);
     }
 }
