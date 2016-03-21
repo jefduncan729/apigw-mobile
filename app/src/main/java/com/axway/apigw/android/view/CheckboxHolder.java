@@ -8,7 +8,7 @@ import android.widget.TextView;
 /**
  * Created by su on 2/23/2016.
  */
-public class CheckboxHolder {
+public class CheckboxHolder implements ViewHolder {
 
     private TextView label;
     private CheckBox edit;

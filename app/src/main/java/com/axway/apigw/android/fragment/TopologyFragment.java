@@ -60,6 +60,19 @@ public class TopologyFragment extends Fragment implements View.OnClickListener {
     }
 
     @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        app = BaseApp.getInstance();
+        topoModel = TopologyModel.getInstance();
+        deployModel = DeploymentModel.getInstance();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+    }
+
+    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rv = inflater.inflate(R.layout.single_pane, null);
         ButterKnife.bind(this, rv);
@@ -189,19 +202,6 @@ public class TopologyFragment extends Fragment implements View.OnClickListener {
         registerForContextMenu(rv);
         rv.setOnClickListener(this);
         return rv;
-    }
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        app = BaseApp.getInstance();
-        topoModel = TopologyModel.getInstance();
-        deployModel = DeploymentModel.getInstance();
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
     }
 
     @Override

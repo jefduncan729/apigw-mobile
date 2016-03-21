@@ -133,7 +133,7 @@ public class ApiClient {
     public void checkCert(Callback callback) {
         if (srvr == null)
             return;
-        executeAsyncRequest(createRequest("/api"), callback);
+        executeAsyncRequest(createRequest("api"), callback);
     }
 
     public ServerInfo getServerInfo() {

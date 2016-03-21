@@ -10,7 +10,7 @@ import android.widget.TextView;
 /**
  * Created by su on 2/23/2016.
  */
-public class LabeledEditHolder {
+public class LabeledEditHolder implements ViewHolder {
 
     private TextView label;
     private EditText edit;

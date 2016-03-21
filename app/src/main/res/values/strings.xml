@@ -89,6 +89,13 @@
     <string name="p12_path">Path to P12 file</string>
     <string name="p12_phrase">P12 Passphrase</string>
 
+    <string name="use_system">Use System level settings</string>
+    <string name="override_port">Override settings for this port</string>
+    <string name="rec_inbound">Record inbound transactions</string>
+    <string name="rec_outbound">Record outbound transactions</string>
+    <string name="rec_path">Record circuit path</string>
+    <string name="rec_trace">Record trace</string>
+
     <string name="cert_trusted">Certificate Chain Trusted</string>
     <string name="truststore_removed">Trust Store removed</string>
     <string name="confirm_remove_truststore">Touch OK to remove trusted certificate store</string>

@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:paddingStart="@dimen/activity_vertical_margin_large"
+    android:paddingEnd="@dimen/activity_vertical_margin_large"
+    android:paddingTop="@dimen/activity_horizontal_margin"
+    android:paddingBottom ="@dimen/activity_horizontal_margin"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="@style/FragmentTitleTextStyle"
+            android:text="Interface Settings"/>
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <CheckBox
+                android:id="@id/edit_enabled"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Port Enabled"/>
+        </LinearLayout>
+    </LinearLayout>
+
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="@dimen/activity_horizontal_margin">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="@style/FragmentTitleTextStyle"
+            android:text="Traffic Monitoring Settings"/>
+
+        <RadioGroup
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+        <RadioButton
+            android:id="@id/edit_system_ca"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="@style/MediumText"
+            android:paddingEnd="@dimen/activity_vertical_margin"
+            android:text="@string/use_system"/>
+
+        <RadioButton
+            android:id="@id/edit_user_ca"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingEnd="@dimen/activity_vertical_margin"
+            android:textAppearance="@style/MediumText"
+            android:text="@string/override_port"/>
+
+        </RadioGroup>
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:paddingStart="@dimen/activity_vertical_margin_large"
+            android:layout_height="wrap_content">
+
+            <include layout="@layout/rec_cfg"/>
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

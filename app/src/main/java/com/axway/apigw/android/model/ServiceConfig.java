@@ -142,6 +142,19 @@ public class ServiceConfig extends Observable {
         return httpSvcs;
     }
 
+    public HttpService httpService(int ndx) {
+        JsonArray a = httpServices();
+        if (a == null)
+            return null;
+        for (int i = 0; i < a.size(); i++) {
+            JsonObject j = a.get(i).getAsJsonObject();
+            if (i == ndx) {
+                return new HttpService(j);
+            }
+        }
+        return null;
+    }
+
     public HttpService httpService(String name) {
         JsonArray a = httpServices();
         if (a == null)

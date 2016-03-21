@@ -17,7 +17,7 @@ import butterknife.ButterKnife;
 /**
  * Created by su on 2/10/2016.
  */
-public class ConnMgrViewHolder {
+public class ConnMgrViewHolder implements ViewHolder {
 
     @Bind(R.id.edit_host) EditText edHost;
     @Bind(R.id.edit_port) EditText edPort;

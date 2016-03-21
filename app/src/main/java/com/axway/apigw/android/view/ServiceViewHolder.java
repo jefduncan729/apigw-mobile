@@ -11,7 +11,7 @@ import com.axway.apigw.android.model.StatusObserver;
 /**
  * Created by su on 2/3/2016.
  */
-public class ServiceViewHolder extends BasicViewHolder implements StatusObserver {
+public class ServiceViewHolder extends BasicViewHolder implements StatusObserver, ViewHolder {
 
     ProgressBar progress;
     ImageView statImg;

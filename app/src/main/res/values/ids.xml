@@ -67,6 +67,10 @@
     <item type="id" name="ctr_svcs_port"/>
     <item type="id" name="ctr_host"/>
     <item type="id" name="ctr_group"/>
+    <item type="id" name="edit_rec_inbound"/>
+    <item type="id" name="edit_rec_outbound"/>
+    <item type="id" name="edit_rec_path"/>
+    <item type="id" name="edit_rec_trace"/>
 
     <item type="id" name="label_name"/>
     <item type="id" name="label_host"/>

@@ -444,6 +444,15 @@ public class TopologyModel extends ApiModel {
         return req;
     }
 
+    public Request updateGroup(Group grp, Callback cb) {
+        assert client != null;
+        assert grp != null;
+        assert cb != null;
+        Request req = client.createRequest(GROUPS_ENDPOINT, "PUT", JsonHelper.getInstance().toJson(grp));
+        client.executeAsyncRequest(req, cb);
+        return req;
+    }
+
     public Request addGateway(Group g, Service svc, int svcsPort, Callback cb) {
         return addGateway(g, svc, svcsPort, null, cb);
     }

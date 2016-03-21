@@ -1,6 +1,7 @@
 package com.axway.apigw.android.activity;
 
 import android.app.ActivityOptions;
+import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -13,6 +14,8 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toolbar;
 
 import com.axway.apigw.android.BaseApp;
@@ -279,7 +282,59 @@ public class TopologyActivity extends BaseActivity {
             case R.id.action_svc_cfg:
                 svcCfgActivity(instId);
                 break;
+            case R.id.action_edit:
+                requestEdit(evt.data);
+                break;
         }
+    }
+
+    private void requestEdit(Intent intent) {
+        if (intent == null)
+            return;
+        String gid = intent.getStringExtra(Constants.EXTRA_GROUP_ID);
+        if (!TextUtils.isEmpty(gid)) {
+            editGroup(gid);
+        }
+    }
+
+    private void editGroup(String gid) {
+        final Group g = topoModel.getGroupById(gid);
+        if (g == null)
+            return;
+        customDialog("Edit Group", R.layout.name_dlg, new CustomDialogCallback() {
+            @Override
+            public void populate(AlertDialog dlg) {
+                TextView lbl = (TextView)dlg.findViewById(R.id.label_name);
+                EditText ed = (EditText)dlg.findViewById(R.id.edit_name);
+                lbl.setText(R.string.name);
+                ed.setText(g.getName());
+            }
+
+            @Override
+            public void save(AlertDialog dlg) {
+                EditText ed = (EditText)dlg.findViewById(R.id.edit_name);
+                String s = ed.getText().toString();
+                g.setName(s);
+                saveGroup(g);
+            }
+
+            @Override
+            public boolean validate(AlertDialog dlg) {
+                EditText ed = (EditText)dlg.findViewById(R.id.edit_name);
+                String s = ed.getText().toString();
+                return !TextUtils.isEmpty(s);
+            }
+        });
+    }
+
+    private void saveGroup(final Group g) {
+        topoModel.updateGroup(g, new BaseCallback() {
+            @Override
+            protected void onSuccessResponse(int code, String msg, String body) {
+                showToast(String.format("%s updated", g.getName()));
+                refresh();
+            }
+        });
     }
 
     private void messagingActivity(String instId) {
@@ -531,7 +586,6 @@ public class TopologyActivity extends BaseActivity {
 
         }
     }
-
 
     private class DdCallback extends BaseCallback {
 

@@ -9,7 +9,7 @@ import android.widget.TextView;
 /**
  * Created by su on 11/3/2014.
  */
-public class BasicViewHolder {
+public class BasicViewHolder implements ViewHolder {
 
     public static final int DEF_TEXT1_ID = android.R.id.text1;
     public static final int DEF_TEXT2_ID = android.R.id.text2;
